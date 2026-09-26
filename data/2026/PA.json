@@ -1,0 +1,270 @@
+{
+  "state": "PA",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "307",
+      "county": "Lehigh / Northampton",
+      "city": "Allentown / Easton / Bethlehem",
+      "mie": 74,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "313",
+      "county": "Bucks",
+      "city": "Bucks",
+      "mie": 80,
+      "lodging": [
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119
+      ]
+    },
+    {
+      "did": "309",
+      "county": "Delaware",
+      "city": "Chester / Radnor / Essington",
+      "mie": 80,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127
+      ]
+    },
+    {
+      "did": "311",
+      "county": "Adams",
+      "city": "Gettysburg",
+      "mie": 68,
+      "lodging": [
+        110,
+        110,
+        110,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "312",
+      "county": "Dauphin  excluding Hershey",
+      "city": "Harrisburg",
+      "mie": 74,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "489",
+      "county": "Hershey",
+      "city": "Hershey",
+      "mie": 80,
+      "lodging": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        196,
+        196,
+        196,
+        145,
+        145,
+        145,
+        145
+      ]
+    },
+    {
+      "did": "314",
+      "county": "Lancaster",
+      "city": "Lancaster",
+      "mie": 74,
+      "lodging": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ]
+    },
+    {
+      "did": "315",
+      "county": "Chester",
+      "city": "Malvern / Frazer / Berwyn",
+      "mie": 80,
+      "lodging": [
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118
+      ]
+    },
+    {
+      "did": "435",
+      "county": "Montgomery",
+      "city": "Montgomery",
+      "mie": 80,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "317",
+      "county": "Philadelphia",
+      "city": "Philadelphia",
+      "mie": 92,
+      "lodging": [
+        156,
+        156,
+        156,
+        187,
+        187,
+        187,
+        187,
+        187,
+        218,
+        218,
+        218,
+        156
+      ]
+    },
+    {
+      "did": "318",
+      "county": "Allegheny",
+      "city": "Pittsburgh",
+      "mie": 80,
+      "lodging": [
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        138
+      ]
+    },
+    {
+      "did": "319",
+      "county": "Berks",
+      "city": "Reading",
+      "mie": 74,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "321",
+      "county": "Centre",
+      "city": "State College ",
+      "mie": 74,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ]
+    }
+  ]
+}

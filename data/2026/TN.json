@@ -1,0 +1,110 @@
+{
+  "state": "TN",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "335",
+      "county": "Williamson",
+      "city": "Brentwood / Franklin",
+      "mie": 86,
+      "lodging": [
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130,
+        130
+      ]
+    },
+    {
+      "did": "336",
+      "county": "Hamilton",
+      "city": "Chattanooga ",
+      "mie": 74,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "338",
+      "county": "Knox",
+      "city": "Knoxville",
+      "mie": 74,
+      "lodging": [
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119
+      ]
+    },
+    {
+      "did": "339",
+      "county": "Shelby",
+      "city": "Memphis",
+      "mie": 74,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "340",
+      "county": "Davidson",
+      "city": "Nashville",
+      "mie": 86,
+      "lodging": [
+        217,
+        217,
+        217,
+        217,
+        217,
+        217,
+        217,
+        217,
+        248,
+        248,
+        217,
+        217
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "state": "ME",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "171",
+      "county": "Hancock / Knox",
+      "city": "Bar Harbor / Rockport",
+      "mie": 92,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        209,
+        209,
+        304,
+        304,
+        264,
+        264,
+        128,
+        128
+      ]
+    },
+    {
+      "did": "172",
+      "county": "York",
+      "city": "Kennebunk / Kittery / Sanford",
+      "mie": 86,
+      "lodging": [
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        201,
+        201,
+        153,
+        153,
+        119,
+        119
+      ]
+    },
+    {
+      "did": "173",
+      "county": "Cumberland / Sagadahoc",
+      "city": "Portland",
+      "mie": 80,
+      "lodging": [
+        114,
+        114,
+        114,
+        114,
+        114,
+        211,
+        211,
+        211,
+        199,
+        199,
+        114,
+        114
+      ]
+    }
+  ]
+}

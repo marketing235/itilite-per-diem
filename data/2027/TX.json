@@ -1,0 +1,230 @@
+{
+  "state": "TX",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "342",
+      "county": "Tarrant  / City of Grapevine",
+      "city": "Arlington / Fort Worth / Grapevine",
+      "mie": 80,
+      "lodging": [
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192
+      ]
+    },
+    {
+      "did": "343",
+      "county": "Travis",
+      "city": "Austin",
+      "mie": 80,
+      "lodging": [
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184
+      ]
+    },
+    {
+      "did": "486",
+      "county": "Howard",
+      "city": "Big Spring",
+      "mie": 68,
+      "lodging": [
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133
+      ]
+    },
+    {
+      "did": "346",
+      "county": "Dallas",
+      "city": "Dallas",
+      "mie": 80,
+      "lodging": [
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184
+      ]
+    },
+    {
+      "did": "348",
+      "county": "Galveston",
+      "city": "Galveston",
+      "mie": 74,
+      "lodging": [
+        116,
+        116,
+        116,
+        116,
+        116,
+        154,
+        154,
+        116,
+        116,
+        116,
+        116,
+        116
+      ]
+    },
+    {
+      "did": "350",
+      "county": "Montgomery / Fort Bend / Harris",
+      "city": "Houston",
+      "mie": 80,
+      "lodging": [
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133
+      ]
+    },
+    {
+      "did": "471",
+      "county": "Midland / Andrews / Ector / Martin",
+      "city": "Midland / Odessa",
+      "mie": 74,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "492",
+      "county": "Reeves",
+      "city": "Pecos",
+      "mie": 74,
+      "lodging": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ]
+    },
+    {
+      "did": "354",
+      "county": "Collin",
+      "city": "Plano",
+      "mie": 80,
+      "lodging": [
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133
+      ]
+    },
+    {
+      "did": "356",
+      "county": "Bexar",
+      "city": "San Antonio",
+      "mie": 74,
+      "lodging": [
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149
+      ]
+    },
+    {
+      "did": "357",
+      "county": "Cameron",
+      "city": "South Padre Island",
+      "mie": 74,
+      "lodging": [
+        123,
+        123,
+        140,
+        140,
+        140,
+        160,
+        160,
+        123,
+        123,
+        123,
+        123,
+        123
+      ]
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "state": "CO",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "50",
+      "county": "Pitkin",
+      "city": "Aspen",
+      "mie": 92,
+      "lodging": [
+        407,
+        407,
+        407,
+        207,
+        207,
+        207,
+        207,
+        207,
+        207,
+        207,
+        207,
+        407
+      ]
+    },
+    {
+      "did": "52",
+      "county": "Boulder / Broomfield",
+      "city": "Boulder / Broomfield",
+      "mie": 80,
+      "lodging": [
+        125,
+        125,
+        125,
+        125,
+        173,
+        173,
+        173,
+        173,
+        173,
+        173,
+        125,
+        125
+      ]
+    },
+    {
+      "did": "53",
+      "county": "El Paso",
+      "city": "Colorado Springs",
+      "mie": 86,
+      "lodging": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        168,
+        168,
+        168,
+        123,
+        123,
+        123,
+        123
+      ]
+    },
+    {
+      "did": "54",
+      "county": "Montezuma",
+      "city": "Cortez",
+      "mie": 74,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "55",
+      "county": "Gunnison",
+      "city": "Crested Butte / Gunnison",
+      "mie": 86,
+      "lodging": [
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154
+      ]
+    },
+    {
+      "did": "56",
+      "county": "Denver / Adams / Arapahoe / Jefferson",
+      "city": "Denver / Aurora",
+      "mie": 92,
+      "lodging": [
+        165,
+        165,
+        165,
+        215,
+        215,
+        215,
+        215,
+        215,
+        215,
+        215,
+        165,
+        165
+      ]
+    },
+    {
+      "did": "427",
+      "county": "Douglas",
+      "city": "Douglas ",
+      "mie": 80,
+      "lodging": [
+        111,
+        111,
+        111,
+        111,
+        111,
+        142,
+        142,
+        142,
+        111,
+        111,
+        111,
+        111
+      ]
+    },
+    {
+      "did": "57",
+      "county": "La Plata",
+      "city": "Durango",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        184,
+        184,
+        184,
+        184,
+        121,
+        121,
+        121
+      ]
+    },
+    {
+      "did": "58",
+      "county": "Larimer",
+      "city": "Fort Collins / Loveland",
+      "mie": 80,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        140,
+        140,
+        140,
+        110,
+        110,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "493",
+      "county": "Grand",
+      "city": "Grand Lake",
+      "mie": 86,
+      "lodging": [
+        173,
+        173,
+        173,
+        122,
+        122,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        173
+      ]
+    },
+    {
+      "did": "61",
+      "county": "Montrose",
+      "city": "Montrose",
+      "mie": 74,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        185,
+        185,
+        185,
+        185,
+        185,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "63",
+      "county": "Summit",
+      "city": "Silverthorne / Breckenridge",
+      "mie": 92,
+      "lodging": [
+        282,
+        282,
+        282,
+        162,
+        162,
+        162,
+        162,
+        162,
+        162,
+        162,
+        162,
+        282
+      ]
+    },
+    {
+      "did": "64",
+      "county": "Routt",
+      "city": "Steamboat Springs",
+      "mie": 92,
+      "lodging": [
+        288,
+        288,
+        288,
+        123,
+        123,
+        179,
+        179,
+        179,
+        179,
+        132,
+        132,
+        288
+      ]
+    },
+    {
+      "did": "65",
+      "county": "San Miguel",
+      "city": "Telluride",
+      "mie": 92,
+      "lodging": [
+        350,
+        350,
+        350,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        184,
+        350
+      ]
+    },
+    {
+      "did": "66",
+      "county": "Eagle",
+      "city": "Vail",
+      "mie": 92,
+      "lodging": [
+        397,
+        397,
+        397,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        397
+      ]
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "state": "MT",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "215",
+      "county": "Gallatin/Park",
+      "city": "Big Sky / West Yellowstone/Gardiner",
+      "mie": 80,
+      "lodging": [
+        176,
+        176,
+        176,
+        176,
+        176,
+        310,
+        310,
+        310,
+        310,
+        176,
+        176,
+        176
+      ]
+    },
+    {
+      "did": "426",
+      "county": "Lewis and Clark",
+      "city": "Helena",
+      "mie": 74,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "496",
+      "county": "Flathead",
+      "city": "Kalispell/Whitefish",
+      "mie": 80,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        232,
+        232,
+        232,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "213",
+      "county": "Missoula",
+      "city": "Missoula",
+      "mie": 74,
+      "lodging": [
+        130,
+        130,
+        130,
+        130,
+        130,
+        195,
+        195,
+        195,
+        195,
+        130,
+        130,
+        130
+      ]
+    }
+  ]
+}

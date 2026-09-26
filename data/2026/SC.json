@@ -1,0 +1,90 @@
+{
+  "state": "SC",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "326",
+      "county": "Charleston / Berkeley / Dorchester",
+      "city": "Charleston",
+      "mie": 92,
+      "lodging": [
+        218,
+        218,
+        288,
+        288,
+        288,
+        244,
+        244,
+        244,
+        244,
+        244,
+        218,
+        218
+      ]
+    },
+    {
+      "did": "327",
+      "county": "Richland / Lexington",
+      "city": "Columbia",
+      "mie": 74,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "329",
+      "county": "Beaufort",
+      "city": "Hilton Head",
+      "mie": 80,
+      "lodging": [
+        118,
+        118,
+        193,
+        193,
+        193,
+        215,
+        215,
+        215,
+        163,
+        163,
+        118,
+        118
+      ]
+    },
+    {
+      "did": "330",
+      "county": "Horry",
+      "city": "Myrtle Beach",
+      "mie": 74,
+      "lodging": [
+        110,
+        110,
+        110,
+        132,
+        132,
+        182,
+        182,
+        182,
+        110,
+        110,
+        110,
+        110
+      ]
+    }
+  ]
+}

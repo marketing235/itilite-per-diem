@@ -1,0 +1,70 @@
+{
+  "state": "SD",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "334",
+      "county": "Lawrence",
+      "city": "Deadwood / Spearfish ",
+      "mie": 80,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "332",
+      "county": "Fall River / Custer",
+      "city": "Hot Springs",
+      "mie": 74,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        161,
+        161,
+        161,
+        161,
+        110,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "333",
+      "county": "Pennington",
+      "city": "Rapid City",
+      "mie": 74,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        158,
+        158,
+        158,
+        110,
+        110,
+        110,
+        110
+      ]
+    }
+  ]
+}

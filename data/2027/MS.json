@@ -1,0 +1,70 @@
+{
+  "state": "MS",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "477",
+      "county": "Lafayette",
+      "city": "Oxford",
+      "mie": 68,
+      "lodging": [
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146
+      ]
+    },
+    {
+      "did": "447",
+      "county": "Desoto",
+      "city": "Southaven",
+      "mie": 68,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "211",
+      "county": "Oktibbeha",
+      "city": "Starkville",
+      "mie": 68,
+      "lodging": [
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133,
+        133
+      ]
+    }
+  ]
+}

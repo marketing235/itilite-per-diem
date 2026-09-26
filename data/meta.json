@@ -1,0 +1,23 @@
+{
+  "pulledAt": "2026-09-27",
+  "fiscalYears": {
+    "2026": {
+      "standard": {
+        "lodging": 110,
+        "mie": 68
+      },
+      "effective": "2025-10-01",
+      "expires": "2026-09-30"
+    },
+    "2027": {
+      "standard": {
+        "lodging": 113,
+        "mie": 68
+      },
+      "effective": "2026-10-01",
+      "expires": "2027-09-30"
+    }
+  },
+  "incidentals": 5,
+  "source": "https://www.gsa.gov/travel/plan-book/per-diem-rates"
+}

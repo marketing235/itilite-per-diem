@@ -1,0 +1,50 @@
+{
+  "state": "DE",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "77",
+      "county": "Sussex",
+      "city": "Lewes",
+      "mie": 74,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        221,
+        221,
+        221,
+        124,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "78",
+      "county": "New Castle",
+      "city": "Wilmington",
+      "mie": 74,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127
+      ]
+    }
+  ]
+}

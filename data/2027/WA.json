@@ -1,0 +1,190 @@
+{
+  "state": "WA",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "384",
+      "county": "Snohomish",
+      "city": "Everett / Lynnwood",
+      "mie": 86,
+      "lodging": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        147,
+        147,
+        147,
+        120,
+        120,
+        120,
+        120
+      ]
+    },
+    {
+      "did": "385",
+      "county": "Grays Harbor",
+      "city": "Ocean Shores",
+      "mie": 86,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        155,
+        155,
+        136,
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "386",
+      "county": "Thurston",
+      "city": "Olympia / Tumwater",
+      "mie": 80,
+      "lodging": [
+        149,
+        149,
+        149,
+        149,
+        149,
+        176,
+        176,
+        176,
+        149,
+        149,
+        149,
+        149
+      ]
+    },
+    {
+      "did": "387",
+      "county": "Clallam / Jefferson",
+      "city": "Port Angeles / Port Townsend",
+      "mie": 92,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        252,
+        252,
+        252,
+        252,
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "475",
+      "county": "Benton / Franklin",
+      "city": "Richland / Pasco",
+      "mie": 86,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "389",
+      "county": "King",
+      "city": "Seattle",
+      "mie": 92,
+      "lodging": [
+        188,
+        188,
+        188,
+        188,
+        188,
+        255,
+        255,
+        255,
+        255,
+        255,
+        188,
+        188
+      ]
+    },
+    {
+      "did": "390",
+      "county": "Spokane",
+      "city": "Spokane",
+      "mie": 86,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "391",
+      "county": "Pierce",
+      "city": "Tacoma",
+      "mie": 86,
+      "lodging": [
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        143
+      ]
+    },
+    {
+      "did": "392",
+      "county": "Clark / Cowlitz / Skamania",
+      "city": "Vancouver",
+      "mie": 86,
+      "lodging": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161
+      ]
+    }
+  ]
+}

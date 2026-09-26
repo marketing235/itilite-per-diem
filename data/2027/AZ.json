@@ -1,0 +1,110 @@
+{
+  "state": "AZ",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "9",
+      "county": "Coconino / Yavapai less the city of Sedona",
+      "city": "Grand Canyon / Flagstaff",
+      "mie": 80,
+      "lodging": [
+        113,
+        113,
+        152,
+        152,
+        152,
+        152,
+        152,
+        152,
+        152,
+        152,
+        113,
+        113
+      ]
+    },
+    {
+      "did": "8",
+      "county": "Navajo",
+      "city": "Kayenta",
+      "mie": 74,
+      "lodging": [
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147
+      ]
+    },
+    {
+      "did": "10",
+      "county": "Maricopa",
+      "city": "Phoenix / Scottsdale",
+      "mie": 86,
+      "lodging": [
+        165,
+        232,
+        232,
+        171,
+        171,
+        122,
+        122,
+        122,
+        165,
+        165,
+        165,
+        165
+      ]
+    },
+    {
+      "did": "11",
+      "county": "City Limits of Sedona",
+      "city": "Sedona",
+      "mie": 92,
+      "lodging": [
+        172,
+        172,
+        282,
+        282,
+        189,
+        189,
+        189,
+        189,
+        220,
+        220,
+        220,
+        220
+      ]
+    },
+    {
+      "did": "12",
+      "county": "Pima",
+      "city": "Tucson",
+      "mie": 80,
+      "lodging": [
+        208,
+        208,
+        208,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154,
+        154
+      ]
+    }
+  ]
+}

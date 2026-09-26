@@ -1,0 +1,170 @@
+{
+  "state": "MD",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "161",
+      "county": "Harford",
+      "city": "Aberdeen / Bel Air / Belcamp",
+      "mie": 74,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "162",
+      "county": "Anne Arundel",
+      "city": "Annapolis",
+      "mie": 80,
+      "lodging": [
+        130,
+        130,
+        130,
+        130,
+        169,
+        169,
+        169,
+        169,
+        169,
+        169,
+        130,
+        130
+      ]
+    },
+    {
+      "did": "163",
+      "county": "Baltimore City",
+      "city": "Baltimore City",
+      "mie": 86,
+      "lodging": [
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166,
+        166
+      ]
+    },
+    {
+      "did": "164",
+      "county": "Dorchester / Talbot",
+      "city": "Cambridge / St. Michaels",
+      "mie": 80,
+      "lodging": [
+        147,
+        147,
+        147,
+        147,
+        147,
+        195,
+        195,
+        195,
+        147,
+        147,
+        147,
+        147
+      ]
+    },
+    {
+      "did": "473",
+      "county": "Queen Anne",
+      "city": "Centreville",
+      "mie": 74,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        127,
+        127
+      ]
+    },
+    {
+      "did": "165",
+      "county": "Howard",
+      "city": "Columbia",
+      "mie": 86,
+      "lodging": [
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116
+      ]
+    },
+    {
+      "did": "75",
+      "county": "Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George's in Maryland)",
+      "city": "District of Columbia",
+      "mie": 92,
+      "lodging": [
+        203,
+        203,
+        295,
+        295,
+        295,
+        295,
+        192,
+        192,
+        287,
+        287,
+        203,
+        203
+      ]
+    },
+    {
+      "did": "170",
+      "county": "Worcester",
+      "city": "Ocean City",
+      "mie": 80,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        306,
+        306,
+        306,
+        115,
+        115,
+        115,
+        115
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+// The 49-state scope for this repo: 48 contiguous states + DC.
+// Alaska and Hawaii are out (not in GSA CONUS data).
+export const states = [
+  // Northeast
+  { name: 'Connecticut', displayName: 'Connecticut', abbreviation: 'CT', slug: 'connecticut', region: 'Northeast', featured: false },
+  { name: 'Maine', displayName: 'Maine', abbreviation: 'ME', slug: 'maine', region: 'Northeast', featured: false },
+  { name: 'Massachusetts', displayName: 'Massachusetts', abbreviation: 'MA', slug: 'massachusetts', region: 'Northeast', featured: true },
+  { name: 'New Hampshire', displayName: 'New Hampshire', abbreviation: 'NH', slug: 'new-hampshire', region: 'Northeast', featured: false },
+  { name: 'New Jersey', displayName: 'New Jersey', abbreviation: 'NJ', slug: 'new-jersey', region: 'Northeast', featured: false },
+  { name: 'New York', displayName: 'New York', abbreviation: 'NY', slug: 'new-york', region: 'Northeast', featured: true },
+  { name: 'Pennsylvania', displayName: 'Pennsylvania', abbreviation: 'PA', slug: 'pennsylvania', region: 'Northeast', featured: false },
+  { name: 'Rhode Island', displayName: 'Rhode Island', abbreviation: 'RI', slug: 'rhode-island', region: 'Northeast', featured: false },
+  { name: 'Vermont', displayName: 'Vermont', abbreviation: 'VT', slug: 'vermont', region: 'Northeast', featured: false },
+
+  // Midwest
+  { name: 'Illinois', displayName: 'Illinois', abbreviation: 'IL', slug: 'illinois', region: 'Midwest', featured: true },
+  { name: 'Indiana', displayName: 'Indiana', abbreviation: 'IN', slug: 'indiana', region: 'Midwest', featured: false },
+  { name: 'Iowa', displayName: 'Iowa', abbreviation: 'IA', slug: 'iowa', region: 'Midwest', featured: false },
+  { name: 'Kansas', displayName: 'Kansas', abbreviation: 'KS', slug: 'kansas', region: 'Midwest', featured: false },
+  { name: 'Michigan', displayName: 'Michigan', abbreviation: 'MI', slug: 'michigan', region: 'Midwest', featured: false },
+  { name: 'Minnesota', displayName: 'Minnesota', abbreviation: 'MN', slug: 'minnesota', region: 'Midwest', featured: false },
+  { name: 'Missouri', displayName: 'Missouri', abbreviation: 'MO', slug: 'missouri', region: 'Midwest', featured: false },
+  { name: 'Nebraska', displayName: 'Nebraska', abbreviation: 'NE', slug: 'nebraska', region: 'Midwest', featured: false },
+  { name: 'North Dakota', displayName: 'North Dakota', abbreviation: 'ND', slug: 'north-dakota', region: 'Midwest', featured: false },
+  { name: 'Ohio', displayName: 'Ohio', abbreviation: 'OH', slug: 'ohio', region: 'Midwest', featured: false },
+  { name: 'South Dakota', displayName: 'South Dakota', abbreviation: 'SD', slug: 'south-dakota', region: 'Midwest', featured: false },
+  { name: 'Wisconsin', displayName: 'Wisconsin', abbreviation: 'WI', slug: 'wisconsin', region: 'Midwest', featured: false },
+
+  // South
+  { name: 'Alabama', displayName: 'Alabama', abbreviation: 'AL', slug: 'alabama', region: 'South', featured: false },
+  { name: 'Arkansas', displayName: 'Arkansas', abbreviation: 'AR', slug: 'arkansas', region: 'South', featured: false },
+  { name: 'Delaware', displayName: 'Delaware', abbreviation: 'DE', slug: 'delaware', region: 'South', featured: false },
+  { name: 'District of Columbia', displayName: 'Washington D.C.', abbreviation: 'DC', slug: 'washington-dc', region: 'South', featured: true },
+  { name: 'Florida', displayName: 'Florida', abbreviation: 'FL', slug: 'florida', region: 'South', featured: true },
+  { name: 'Georgia', displayName: 'Georgia', abbreviation: 'GA', slug: 'georgia', region: 'South', featured: true },
+  { name: 'Kentucky', displayName: 'Kentucky', abbreviation: 'KY', slug: 'kentucky', region: 'South', featured: false },
+  { name: 'Louisiana', displayName: 'Louisiana', abbreviation: 'LA', slug: 'louisiana', region: 'South', featured: false },
+  { name: 'Maryland', displayName: 'Maryland', abbreviation: 'MD', slug: 'maryland', region: 'South', featured: false },
+  { name: 'Mississippi', displayName: 'Mississippi', abbreviation: 'MS', slug: 'mississippi', region: 'South', featured: false },
+  { name: 'North Carolina', displayName: 'North Carolina', abbreviation: 'NC', slug: 'north-carolina', region: 'South', featured: false },
+  { name: 'Oklahoma', displayName: 'Oklahoma', abbreviation: 'OK', slug: 'oklahoma', region: 'South', featured: false },
+  { name: 'South Carolina', displayName: 'South Carolina', abbreviation: 'SC', slug: 'south-carolina', region: 'South', featured: false },
+  { name: 'Tennessee', displayName: 'Tennessee', abbreviation: 'TN', slug: 'tennessee', region: 'South', featured: false },
+  { name: 'Texas', displayName: 'Texas', abbreviation: 'TX', slug: 'texas', region: 'South', featured: true },
+  { name: 'Virginia', displayName: 'Virginia', abbreviation: 'VA', slug: 'virginia', region: 'South', featured: false },
+  { name: 'West Virginia', displayName: 'West Virginia', abbreviation: 'WV', slug: 'west-virginia', region: 'South', featured: false },
+
+  // West
+  { name: 'Arizona', displayName: 'Arizona', abbreviation: 'AZ', slug: 'arizona', region: 'West', featured: false },
+  { name: 'California', displayName: 'California', abbreviation: 'CA', slug: 'california', region: 'West', featured: true },
+  { name: 'Colorado', displayName: 'Colorado', abbreviation: 'CO', slug: 'colorado', region: 'West', featured: false },
+  { name: 'Idaho', displayName: 'Idaho', abbreviation: 'ID', slug: 'idaho', region: 'West', featured: false },
+  { name: 'Montana', displayName: 'Montana', abbreviation: 'MT', slug: 'montana', region: 'West', featured: false },
+  { name: 'Nevada', displayName: 'Nevada', abbreviation: 'NV', slug: 'nevada', region: 'West', featured: false },
+  { name: 'New Mexico', displayName: 'New Mexico', abbreviation: 'NM', slug: 'new-mexico', region: 'West', featured: false },
+  { name: 'Oregon', displayName: 'Oregon', abbreviation: 'OR', slug: 'oregon', region: 'West', featured: false },
+  { name: 'Utah', displayName: 'Utah', abbreviation: 'UT', slug: 'utah', region: 'West', featured: false },
+  { name: 'Washington', displayName: 'Washington', abbreviation: 'WA', slug: 'washington', region: 'West', featured: true },
+  { name: 'Wyoming', displayName: 'Wyoming', abbreviation: 'WY', slug: 'wyoming', region: 'West', featured: false },
+];

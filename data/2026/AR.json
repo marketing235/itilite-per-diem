@@ -1,0 +1,30 @@
+{
+  "state": "AR",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "6",
+      "county": "Garland",
+      "city": "Hot Springs",
+      "mie": 68,
+      "lodging": [
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114,
+        114
+      ]
+    }
+  ]
+}

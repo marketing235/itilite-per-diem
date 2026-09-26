@@ -1,0 +1,90 @@
+{
+  "state": "AL",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "1",
+      "county": "Jefferson",
+      "city": "Birmingham",
+      "mie": 80,
+      "lodging": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ]
+    },
+    {
+      "did": "2",
+      "county": "Baldwin",
+      "city": "Gulf Shores",
+      "mie": 74,
+      "lodging": [
+        144,
+        144,
+        177,
+        177,
+        177,
+        221,
+        221,
+        144,
+        144,
+        144,
+        144,
+        144
+      ]
+    },
+    {
+      "did": "3",
+      "county": "Madison",
+      "city": "Huntsville",
+      "mie": 74,
+      "lodging": [
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146
+      ]
+    },
+    {
+      "did": "460",
+      "county": "Mobile",
+      "city": "Mobile",
+      "mie": 74,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    }
+  ]
+}

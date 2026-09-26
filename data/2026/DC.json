@@ -1,0 +1,27 @@
+{
+  "state": "DC",
+  "fiscalYear": 2026,
+  "standard": null,
+  "locations": [
+    {
+      "did": "75",
+      "county": "Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George's in Maryland)",
+      "city": "District of Columbia",
+      "mie": 92,
+      "lodging": [
+        196,
+        196,
+        276,
+        276,
+        276,
+        276,
+        183,
+        183,
+        275,
+        275,
+        196,
+        196
+      ]
+    }
+  ]
+}

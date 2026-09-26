@@ -1,0 +1,270 @@
+{
+  "state": "MA",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "147",
+      "county": "Essex",
+      "city": "Andover",
+      "mie": 80,
+      "lodging": [
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137
+      ]
+    },
+    {
+      "did": "148",
+      "county": "Suffolk, city of Cambridge",
+      "city": "Boston / Cambridge",
+      "mie": 92,
+      "lodging": [
+        209,
+        209,
+        291,
+        291,
+        291,
+        291,
+        291,
+        291,
+        349,
+        349,
+        209,
+        209
+      ]
+    },
+    {
+      "did": "149",
+      "county": "Middlesex less the city of Cambridge",
+      "city": "Burlington / Woburn",
+      "mie": 86,
+      "lodging": [
+        144,
+        144,
+        144,
+        144,
+        178,
+        178,
+        178,
+        178,
+        178,
+        178,
+        144,
+        144
+      ]
+    },
+    {
+      "did": "150",
+      "county": "City limits of Falmouth",
+      "city": "Falmouth",
+      "mie": 86,
+      "lodging": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        253,
+        253,
+        142,
+        142,
+        142,
+        142
+      ]
+    },
+    {
+      "did": "151",
+      "county": "Barnstable less the city of Falmouth",
+      "city": "Hyannis",
+      "mie": 92,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        209,
+        209,
+        131,
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "152",
+      "county": "Dukes",
+      "city": "Martha's Vineyard",
+      "mie": 92,
+      "lodging": [
+        196,
+        196,
+        196,
+        196,
+        196,
+        462,
+        462,
+        462,
+        462,
+        196,
+        196,
+        196
+      ]
+    },
+    {
+      "did": "153",
+      "county": "Nantucket",
+      "city": "Nantucket",
+      "mie": 92,
+      "lodging": [
+        175,
+        175,
+        175,
+        175,
+        175,
+        471,
+        471,
+        471,
+        471,
+        175,
+        175,
+        175
+      ]
+    },
+    {
+      "did": "154",
+      "county": "Hampshire",
+      "city": "Northampton",
+      "mie": 80,
+      "lodging": [
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157
+      ]
+    },
+    {
+      "did": "155",
+      "county": "Berkshire",
+      "city": "Pittsfield",
+      "mie": 86,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        178,
+        178,
+        136,
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "156",
+      "county": "Plymouth / Bristol",
+      "city": "Plymouth / Taunton / New Bedford",
+      "mie": 80,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "157",
+      "county": "Norfolk",
+      "city": "Quincy",
+      "mie": 80,
+      "lodging": [
+        139,
+        139,
+        139,
+        139,
+        175,
+        175,
+        175,
+        175,
+        175,
+        175,
+        139,
+        139
+      ]
+    },
+    {
+      "did": "158",
+      "county": "Hampden",
+      "city": "Springfield",
+      "mie": 74,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "did": "160",
+      "county": "Worcester",
+      "city": "Worcester",
+      "mie": 80,
+      "lodging": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "state": "MO",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "204",
+      "county": "Jackson / Clay / Cass / Platte",
+      "city": "Kansas City",
+      "mie": 80,
+      "lodging": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ]
+    },
+    {
+      "did": "207",
+      "county": "St. Louis / St. Louis City / St. Charles",
+      "city": "St. Louis",
+      "mie": 86,
+      "lodging": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150
+      ]
+    }
+  ]
+}

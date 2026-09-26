@@ -1,0 +1,50 @@
+{
+  "state": "LA",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "478",
+      "county": "Allen / Jefferson Davis / Natchitoches / Rapides / Vernon Parishes",
+      "city": "Alexandria / Leesville / Natchitoches",
+      "mie": 68,
+      "lodging": [
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118,
+        118
+      ]
+    },
+    {
+      "did": "144",
+      "county": "Orleans / Jefferson Parishes",
+      "city": "New Orleans",
+      "mie": 80,
+      "lodging": [
+        162,
+        188,
+        188,
+        188,
+        188,
+        138,
+        138,
+        138,
+        162,
+        162,
+        162,
+        162
+      ]
+    }
+  ]
+}

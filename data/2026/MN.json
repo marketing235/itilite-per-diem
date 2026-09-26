@@ -1,0 +1,70 @@
+{
+  "state": "MN",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "199",
+      "county": "St. Louis",
+      "city": "Duluth",
+      "mie": 86,
+      "lodging": [
+        159,
+        159,
+        159,
+        159,
+        159,
+        220,
+        220,
+        220,
+        220,
+        220,
+        159,
+        159
+      ]
+    },
+    {
+      "did": "201",
+      "county": "Hennepin / Ramsey",
+      "city": "Minneapolis / St. Paul",
+      "mie": 92,
+      "lodging": [
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148
+      ]
+    },
+    {
+      "did": "202",
+      "county": "Olmsted",
+      "city": "Rochester",
+      "mie": 80,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127
+      ]
+    }
+  ]
+}

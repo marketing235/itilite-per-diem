@@ -1,0 +1,30 @@
+{
+  "state": "NE",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "231",
+      "county": "Douglas",
+      "city": "Omaha",
+      "mie": 80,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ]
+    }
+  ]
+}

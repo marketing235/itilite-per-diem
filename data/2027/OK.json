@@ -1,0 +1,30 @@
+{
+  "state": "OK",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "295",
+      "county": "Oklahoma",
+      "city": "Oklahoma City",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121
+      ]
+    }
+  ]
+}

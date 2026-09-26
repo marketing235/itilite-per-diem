@@ -1,0 +1,110 @@
+{
+  "state": "VT",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "377",
+      "county": "Chittenden",
+      "city": "Burlington",
+      "mie": 86,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        202,
+        202,
+        202,
+        202,
+        202,
+        202,
+        128,
+        128
+      ]
+    },
+    {
+      "did": "378",
+      "county": "Bennington",
+      "city": "Manchester",
+      "mie": 86,
+      "lodging": [
+        168,
+        168,
+        168,
+        168,
+        168,
+        168,
+        168,
+        220,
+        220,
+        220,
+        168,
+        168
+      ]
+    },
+    {
+      "did": "379",
+      "county": "Washington",
+      "city": "Montpelier",
+      "mie": 74,
+      "lodging": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        227,
+        227,
+        227,
+        167,
+        167
+      ]
+    },
+    {
+      "did": "380",
+      "county": "Lamoille",
+      "city": "Stowe ",
+      "mie": 86,
+      "lodging": [
+        185,
+        185,
+        148,
+        148,
+        148,
+        185,
+        185,
+        185,
+        185,
+        185,
+        185,
+        185
+      ]
+    },
+    {
+      "did": "381",
+      "county": "Windsor",
+      "city": "White River Junction",
+      "mie": 86,
+      "lodging": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144
+      ]
+    }
+  ]
+}

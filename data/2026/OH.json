@@ -1,0 +1,130 @@
+{
+  "state": "OH",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "282",
+      "county": "Hamilton / Clermont",
+      "city": "Cincinnati",
+      "mie": 86,
+      "lodging": [
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163,
+        163
+      ]
+    },
+    {
+      "did": "283",
+      "county": "Cuyahoga",
+      "city": "Cleveland",
+      "mie": 80,
+      "lodging": [
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159,
+        159
+      ]
+    },
+    {
+      "did": "284",
+      "county": "Franklin",
+      "city": "Columbus",
+      "mie": 80,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "285",
+      "county": "Greene / Montgomery",
+      "city": "Dayton / Fairborn",
+      "mie": 74,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "287",
+      "county": "Butler / Warren",
+      "city": "Hamilton",
+      "mie": 74,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "280",
+      "county": "Erie",
+      "city": "Sandusky",
+      "mie": 68,
+      "lodging": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        116,
+        116,
+        116,
+        144
+      ]
+    }
+  ]
+}

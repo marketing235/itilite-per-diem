@@ -1,0 +1,30 @@
+{
+  "state": "KS",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "137",
+      "county": "Wyandotte / Johnson / Leavenworth",
+      "city": "Kansas City / Overland Park",
+      "mie": 80,
+      "lodging": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ]
+    }
+  ]
+}

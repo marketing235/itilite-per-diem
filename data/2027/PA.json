@@ -1,0 +1,250 @@
+{
+  "state": "PA",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "313",
+      "county": "Bucks",
+      "city": "Bucks",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121
+      ]
+    },
+    {
+      "did": "309",
+      "county": "Delaware",
+      "city": "Chester / Radnor / Essington",
+      "mie": 80,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "311",
+      "county": "Adams",
+      "city": "Gettysburg",
+      "mie": 68,
+      "lodging": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ]
+    },
+    {
+      "did": "312",
+      "county": "Dauphin  excluding Hershey",
+      "city": "Harrisburg",
+      "mie": 74,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "489",
+      "county": "Hershey",
+      "city": "Hershey",
+      "mie": 80,
+      "lodging": [
+        151,
+        151,
+        151,
+        151,
+        151,
+        207,
+        207,
+        207,
+        151,
+        151,
+        151,
+        151
+      ]
+    },
+    {
+      "did": "314",
+      "county": "Lancaster",
+      "city": "Lancaster",
+      "mie": 74,
+      "lodging": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ]
+    },
+    {
+      "did": "315",
+      "county": "Chester",
+      "city": "Malvern / Frazer / Berwyn",
+      "mie": 80,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "435",
+      "county": "Montgomery",
+      "city": "Montgomery",
+      "mie": 80,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "317",
+      "county": "Philadelphia",
+      "city": "Philadelphia",
+      "mie": 92,
+      "lodging": [
+        185,
+        185,
+        185,
+        185,
+        185,
+        185,
+        174,
+        174,
+        227,
+        227,
+        227,
+        185
+      ]
+    },
+    {
+      "did": "318",
+      "county": "Allegheny",
+      "city": "Pittsburgh",
+      "mie": 80,
+      "lodging": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144
+      ]
+    },
+    {
+      "did": "319",
+      "county": "Berks",
+      "city": "Reading",
+      "mie": 74,
+      "lodging": [
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122
+      ]
+    },
+    {
+      "did": "321",
+      "county": "Centre",
+      "city": "State College",
+      "mie": 74,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "state": "IA",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "476",
+      "county": "Dallas",
+      "city": "Dallas",
+      "mie": 80,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "118",
+      "county": "Polk",
+      "city": "Des Moines",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121
+      ]
+    }
+  ]
+}

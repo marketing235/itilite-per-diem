@@ -1,0 +1,14 @@
+{
+  "name": "itilite-per-diem",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "pull": "node scripts/pull-gsa.js",
+    "build": "node scripts/build-tables.js",
+    "test": "node --test"
+  }
+}

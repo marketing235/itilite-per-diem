@@ -1,0 +1,50 @@
+{
+  "state": "NV",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "255",
+      "county": "Washoe",
+      "city": "Incline Village / Reno / Sparks",
+      "mie": 80,
+      "lodging": [
+        138,
+        138,
+        138,
+        138,
+        138,
+        138,
+        184,
+        184,
+        138,
+        138,
+        138,
+        138
+      ]
+    },
+    {
+      "did": "256",
+      "county": "Clark",
+      "city": "Las Vegas",
+      "mie": 86,
+      "lodging": [
+        159,
+        159,
+        159,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    }
+  ]
+}

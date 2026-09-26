@@ -1,0 +1,50 @@
+{
+  "state": "WY",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "408",
+      "county": "Park",
+      "city": "Cody",
+      "mie": 74,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        213,
+        213,
+        213,
+        213,
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "did": "409",
+      "county": "Teton / Sublette",
+      "city": "Jackson / Pinedale",
+      "mie": 92,
+      "lodging": [
+        215,
+        215,
+        215,
+        215,
+        215,
+        441,
+        441,
+        441,
+        441,
+        215,
+        215,
+        215
+      ]
+    }
+  ]
+}

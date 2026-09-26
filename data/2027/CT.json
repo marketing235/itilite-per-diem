@@ -1,0 +1,90 @@
+{
+  "state": "CT",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "67",
+      "county": "Fairfield",
+      "city": "Bridgeport / Danbury",
+      "mie": 86,
+      "lodging": [
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156
+      ]
+    },
+    {
+      "did": "69",
+      "county": "Hartford",
+      "city": "Hartford",
+      "mie": 80,
+      "lodging": [
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146,
+        146
+      ]
+    },
+    {
+      "did": "71",
+      "county": "New Haven",
+      "city": "New Haven",
+      "mie": 80,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "72",
+      "county": "New London",
+      "city": "New London / Groton",
+      "mie": 86,
+      "lodging": [
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149
+      ]
+    }
+  ]
+}

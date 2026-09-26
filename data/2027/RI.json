@@ -1,0 +1,50 @@
+{
+  "state": "RI",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "323",
+      "county": "Newport",
+      "city": "Jamestown / Middletown / Newport",
+      "mie": 80,
+      "lodging": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        274,
+        274,
+        274,
+        236,
+        236,
+        150,
+        150
+      ]
+    },
+    {
+      "did": "325",
+      "county": "Providence / Bristol",
+      "city": "Providence / Bristol",
+      "mie": 80,
+      "lodging": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161
+      ]
+    }
+  ]
+}

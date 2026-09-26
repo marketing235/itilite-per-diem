@@ -1,0 +1,50 @@
+{
+  "state": "WV",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "406",
+      "county": "Jefferson",
+      "city": "Charles Town",
+      "mie": 68,
+      "lodging": [
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122
+      ]
+    },
+    {
+      "did": "403",
+      "county": "Kanawha",
+      "city": "Charleston",
+      "mie": 68,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    }
+  ]
+}

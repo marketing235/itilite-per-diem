@@ -1,0 +1,390 @@
+{
+  "state": "NY",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "258",
+      "county": "Albany",
+      "city": "Albany",
+      "mie": 86,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "269",
+      "county": "Broome",
+      "city": "Binghamton",
+      "mie": 74,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "260",
+      "county": "Erie",
+      "city": "Buffalo",
+      "mie": 80,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        139,
+        139,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "261",
+      "county": "Nassau",
+      "city": "Floral Park / Garden City / Great Neck",
+      "mie": 86,
+      "lodging": [
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164
+      ]
+    },
+    {
+      "did": "262",
+      "county": "Warren",
+      "city": "Glens Falls",
+      "mie": 86,
+      "lodging": [
+        117,
+        117,
+        117,
+        117,
+        117,
+        117,
+        186,
+        186,
+        117,
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "did": "277",
+      "county": "Tompkins",
+      "city": "Ithaca",
+      "mie": 80,
+      "lodging": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144
+      ]
+    },
+    {
+      "did": "264",
+      "county": "Ulster",
+      "city": "Kingston",
+      "mie": 86,
+      "lodging": [
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139
+      ]
+    },
+    {
+      "did": "265",
+      "county": "Essex",
+      "city": "Lake Placid",
+      "mie": 86,
+      "lodging": [
+        165,
+        165,
+        144,
+        144,
+        144,
+        144,
+        238,
+        238,
+        165,
+        165,
+        165,
+        165
+      ]
+    },
+    {
+      "did": "266",
+      "county": "Bronx / Kings / New York / Queens / Richmond",
+      "city": "New York City",
+      "mie": 92,
+      "lodging": [
+        179,
+        179,
+        281,
+        281,
+        281,
+        281,
+        237,
+        237,
+        342,
+        342,
+        342,
+        342
+      ]
+    },
+    {
+      "did": "267",
+      "county": "Niagara",
+      "city": "Niagara Falls",
+      "mie": 80,
+      "lodging": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        142,
+        142,
+        142,
+        110,
+        110,
+        110,
+        110
+      ]
+    },
+    {
+      "did": "268",
+      "county": "Rockland",
+      "city": "Nyack / Palisades",
+      "mie": 80,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "270",
+      "county": "Dutchess",
+      "city": "Poughkeepsie",
+      "mie": 80,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "271",
+      "county": "Suffolk",
+      "city": "Riverhead / Ronkonkoma / Melville",
+      "mie": 86,
+      "lodging": [
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155,
+        155
+      ]
+    },
+    {
+      "did": "272",
+      "county": "Monroe",
+      "city": "Rochester",
+      "mie": 80,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "273",
+      "county": "Saratoga / Schenectady",
+      "city": "Saratoga Springs / Schenectady",
+      "mie": 80,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        214,
+        214,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "274",
+      "county": "Onondaga / Oswego",
+      "city": "Syracuse / Oswego",
+      "mie": 80,
+      "lodging": [
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122
+      ]
+    },
+    {
+      "did": "275",
+      "county": "Westchester",
+      "city": "Tarrytown / White Plains / New Rochelle",
+      "mie": 92,
+      "lodging": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161
+      ]
+    },
+    {
+      "did": "276",
+      "county": "Rensselaer",
+      "city": "Troy ",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121
+      ]
+    },
+    {
+      "did": "278",
+      "county": "Orange",
+      "city": "West Point",
+      "mie": 80,
+      "lodging": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "state": "IN",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "127",
+      "county": "Monroe",
+      "city": "Bloomington",
+      "mie": 74,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        154,
+        154,
+        154,
+        154,
+        121,
+        121,
+        121,
+        121
+      ]
+    },
+    {
+      "did": "130",
+      "county": "Marion / Hamilton",
+      "city": "Indianapolis / Carmel",
+      "mie": 80,
+      "lodging": [
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140,
+        140
+      ]
+    },
+    {
+      "did": "131",
+      "county": "Tippecanoe",
+      "city": "Lafayette / West Lafayette",
+      "mie": 74,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    }
+  ]
+}

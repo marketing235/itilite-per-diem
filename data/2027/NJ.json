@@ -1,0 +1,210 @@
+{
+  "state": "NJ",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "241",
+      "county": "Camden / Burlington",
+      "city": "Cherry Hill / Moorestown",
+      "mie": 80,
+      "lodging": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ]
+    },
+    {
+      "did": "242",
+      "county": "Monmouth",
+      "city": "Eatontown / Freehold",
+      "mie": 86,
+      "lodging": [
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148
+      ]
+    },
+    {
+      "did": "243",
+      "county": "Middlesex",
+      "city": "Edison / Piscataway",
+      "mie": 80,
+      "lodging": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ]
+    },
+    {
+      "did": "244",
+      "county": "Hunterdon",
+      "city": "Flemington",
+      "mie": 80,
+      "lodging": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "did": "246",
+      "county": "Essex / Bergen / Hudson / Passaic",
+      "city": "Newark",
+      "mie": 86,
+      "lodging": [
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        175,
+        175,
+        175,
+        175
+      ]
+    },
+    {
+      "did": "247",
+      "county": "Morris",
+      "city": "Parsippany",
+      "mie": 80,
+      "lodging": [
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        148
+      ]
+    },
+    {
+      "did": "249",
+      "county": "Mercer",
+      "city": "Princeton / Trenton",
+      "mie": 86,
+      "lodging": [
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151,
+        151
+      ]
+    },
+    {
+      "did": "248",
+      "county": "Somerset",
+      "city": "Somerset",
+      "mie": 80,
+      "lodging": [
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147
+      ]
+    },
+    {
+      "did": "250",
+      "county": "Union",
+      "city": "Springfield / Cranford / New Providence",
+      "mie": 80,
+      "lodging": [
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141,
+        141
+      ]
+    },
+    {
+      "did": "251",
+      "county": "Ocean",
+      "city": "Toms River",
+      "mie": 74,
+      "lodging": [
+        169,
+        169,
+        169,
+        169,
+        169,
+        217,
+        217,
+        217,
+        169,
+        169,
+        169,
+        169
+      ]
+    }
+  ]
+}

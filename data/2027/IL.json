@@ -1,0 +1,90 @@
+{
+  "state": "IL",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "422",
+      "county": "Will",
+      "city": "Bolingbrook / Romeoville / Lemont",
+      "mie": 74,
+      "lodging": [
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119
+      ]
+    },
+    {
+      "did": "123",
+      "county": "Cook / Lake",
+      "city": "Chicago",
+      "mie": 92,
+      "lodging": [
+        148,
+        148,
+        148,
+        238,
+        238,
+        238,
+        213,
+        213,
+        232,
+        232,
+        232,
+        148
+      ]
+    },
+    {
+      "did": "462",
+      "county": "St. Clair",
+      "city": "East St. Louis / O'Fallon / Fairview Heights",
+      "mie": 86,
+      "lodging": [
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156
+      ]
+    },
+    {
+      "did": "124",
+      "county": "DuPage",
+      "city": "Oakbrook Terrace",
+      "mie": 80,
+      "lodging": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ]
+    }
+  ]
+}

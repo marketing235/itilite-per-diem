@@ -1,0 +1,650 @@
+{
+  "state": "CA",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "14",
+      "county": "Contra Costa",
+      "city": "Antioch / Brentwood / Concord",
+      "mie": 86,
+      "lodging": [
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147
+      ]
+    },
+    {
+      "did": "481",
+      "county": "Kern",
+      "city": "Bakersfield / Ridgecrest",
+      "mie": 74,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "16",
+      "county": "San Bernardino",
+      "city": "Barstow / Ontario / Victorville",
+      "mie": 86,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "20",
+      "county": "Inyo / NAWS China Lake",
+      "city": "Death Valley",
+      "mie": 80,
+      "lodging": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142
+      ]
+    },
+    {
+      "did": "461",
+      "county": "Humboldt",
+      "city": "Eureka / Arcata / McKinleyville",
+      "mie": 86,
+      "lodging": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        172,
+        172,
+        172,
+        125,
+        125,
+        125,
+        125
+      ]
+    },
+    {
+      "did": "21",
+      "county": "Fresno",
+      "city": "Fresno",
+      "mie": 86,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "22",
+      "county": "Los Angeles / Orange / Ventura / Edwards AFB less the city of Santa Monica",
+      "city": "Los Angeles",
+      "mie": 86,
+      "lodging": [
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191
+      ]
+    },
+    {
+      "did": "23",
+      "county": "Mono",
+      "city": "Mammoth Lakes",
+      "mie": 86,
+      "lodging": [
+        195,
+        195,
+        195,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        195
+      ]
+    },
+    {
+      "did": "24",
+      "county": "Marin",
+      "city": "Mill Valley / San Rafael / Novato",
+      "mie": 92,
+      "lodging": [
+        153,
+        153,
+        153,
+        153,
+        153,
+        175,
+        175,
+        175,
+        175,
+        153,
+        153,
+        153
+      ]
+    },
+    {
+      "did": "26",
+      "county": "Monterey",
+      "city": "Monterey",
+      "mie": 92,
+      "lodging": [
+        191,
+        199,
+        199,
+        199,
+        199,
+        199,
+        279,
+        279,
+        191,
+        191,
+        191,
+        191
+      ]
+    },
+    {
+      "did": "27",
+      "county": "Napa",
+      "city": "Napa",
+      "mie": 92,
+      "lodging": [
+        172,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246,
+        172
+      ]
+    },
+    {
+      "did": "28",
+      "county": "Madera",
+      "city": "Oakhurst",
+      "mie": 80,
+      "lodging": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ]
+    },
+    {
+      "did": "29",
+      "county": "Alameda",
+      "city": "Oakland",
+      "mie": 92,
+      "lodging": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145
+      ]
+    },
+    {
+      "did": "30",
+      "county": "Riverside",
+      "city": "Palm Springs",
+      "mie": 86,
+      "lodging": [
+        186,
+        186,
+        186,
+        186,
+        141,
+        141,
+        141,
+        141,
+        141,
+        186,
+        186,
+        186
+      ]
+    },
+    {
+      "did": "31",
+      "county": "Mendocino",
+      "city": "Point Arena / Gualala",
+      "mie": 86,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "33",
+      "county": "Sacramento",
+      "city": "Sacramento",
+      "mie": 86,
+      "lodging": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150
+      ]
+    },
+    {
+      "did": "34",
+      "county": "San Diego",
+      "city": "San Diego",
+      "mie": 86,
+      "lodging": [
+        199,
+        199,
+        199,
+        199,
+        199,
+        237,
+        237,
+        199,
+        199,
+        199,
+        199,
+        199
+      ]
+    },
+    {
+      "did": "35",
+      "county": "San Francisco",
+      "city": "San Francisco",
+      "mie": 92,
+      "lodging": [
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        272,
+        272,
+        272,
+        272
+      ]
+    },
+    {
+      "did": "36",
+      "county": "San Luis Obispo",
+      "city": "San Luis Obispo",
+      "mie": 86,
+      "lodging": [
+        163,
+        163,
+        163,
+        163,
+        163,
+        203,
+        203,
+        163,
+        163,
+        163,
+        163,
+        163
+      ]
+    },
+    {
+      "did": "37",
+      "county": "San Mateo",
+      "city": "San Mateo / Foster City / Belmont",
+      "mie": 86,
+      "lodging": [
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183
+      ]
+    },
+    {
+      "did": "38",
+      "county": "Santa Barbara",
+      "city": "Santa Barbara",
+      "mie": 92,
+      "lodging": [
+        205,
+        205,
+        205,
+        205,
+        205,
+        205,
+        262,
+        262,
+        205,
+        205,
+        205,
+        205
+      ]
+    },
+    {
+      "did": "39",
+      "county": "Santa Cruz",
+      "city": "Santa Cruz",
+      "mie": 86,
+      "lodging": [
+        139,
+        139,
+        139,
+        139,
+        139,
+        176,
+        176,
+        176,
+        139,
+        139,
+        139,
+        139
+      ]
+    },
+    {
+      "did": "40",
+      "county": "City limits of Santa Monica",
+      "city": "Santa Monica ",
+      "mie": 92,
+      "lodging": [
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273,
+        273
+      ]
+    },
+    {
+      "did": "41",
+      "county": "Sonoma",
+      "city": "Santa Rosa",
+      "mie": 86,
+      "lodging": [
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157
+      ]
+    },
+    {
+      "did": "42",
+      "county": "El Dorado",
+      "city": "South Lake Tahoe",
+      "mie": 86,
+      "lodging": [
+        247,
+        247,
+        247,
+        143,
+        143,
+        171,
+        171,
+        171,
+        141,
+        141,
+        141,
+        247
+      ]
+    },
+    {
+      "did": "43",
+      "county": "San Joaquin",
+      "city": "Stockton ",
+      "mie": 74,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "44",
+      "county": "Santa Clara",
+      "city": "Sunnyvale / Palo Alto / San Jose",
+      "mie": 92,
+      "lodging": [
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192
+      ]
+    },
+    {
+      "did": "45",
+      "county": "Placer",
+      "city": "Tahoe City",
+      "mie": 86,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "46",
+      "county": "Nevada",
+      "city": "Truckee",
+      "mie": 86,
+      "lodging": [
+        169,
+        169,
+        146,
+        146,
+        146,
+        173,
+        173,
+        173,
+        142,
+        142,
+        142,
+        169
+      ]
+    },
+    {
+      "did": "47",
+      "county": "Tulare",
+      "city": "Visalia",
+      "mie": 80,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "48",
+      "county": "Yolo",
+      "city": "West Sacramento / Davis",
+      "mie": 80,
+      "lodging": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142
+      ]
+    },
+    {
+      "did": "49",
+      "county": "Mariposa",
+      "city": "Yosemite National Park",
+      "mie": 86,
+      "lodging": [
+        203,
+        203,
+        203,
+        203,
+        181,
+        181,
+        181,
+        181,
+        181,
+        181,
+        181,
+        181
+      ]
+    }
+  ]
+}

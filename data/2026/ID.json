@@ -1,0 +1,70 @@
+{
+  "state": "ID",
+  "fiscalYear": 2026,
+  "standard": {
+    "lodging": 110,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "495",
+      "county": "Ada",
+      "city": "Boise",
+      "mie": 86,
+      "lodging": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        191,
+        191,
+        191,
+        191,
+        191,
+        167,
+        167
+      ]
+    },
+    {
+      "did": "120",
+      "county": "Kootenai",
+      "city": "Coeur d'Alene",
+      "mie": 74,
+      "lodging": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        217,
+        217,
+        217,
+        142,
+        142,
+        142,
+        142
+      ]
+    },
+    {
+      "did": "122",
+      "county": "Blaine / Elmore",
+      "city": "Sun Valley / Ketchum",
+      "mie": 80,
+      "lodging": [
+        300,
+        300,
+        300,
+        181,
+        181,
+        295,
+        295,
+        295,
+        295,
+        191,
+        191,
+        300
+      ]
+    }
+  ]
+}

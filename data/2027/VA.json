@@ -1,0 +1,210 @@
+{
+  "state": "VA",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "459",
+      "county": "Montgomery",
+      "city": "Blacksburg",
+      "mie": 68,
+      "lodging": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "did": "363",
+      "county": "City of Charlottesville / Albemarle",
+      "city": "Charlottesville",
+      "mie": 80,
+      "lodging": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        142
+      ]
+    },
+    {
+      "did": "75",
+      "county": "Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George's in Maryland)",
+      "city": "District of Columbia",
+      "mie": 92,
+      "lodging": [
+        203,
+        203,
+        295,
+        295,
+        295,
+        295,
+        192,
+        192,
+        287,
+        287,
+        203,
+        203
+      ]
+    },
+    {
+      "did": "428",
+      "county": "Loudoun",
+      "city": "Loudoun",
+      "mie": 80,
+      "lodging": [
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121,
+        121
+      ]
+    },
+    {
+      "did": "365",
+      "county": "Campbell / Lynchburg City",
+      "city": "Lynchburg",
+      "mie": 68,
+      "lodging": [
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124,
+        124
+      ]
+    },
+    {
+      "did": "368",
+      "county": "City of Richmond",
+      "city": "Richmond",
+      "mie": 80,
+      "lodging": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        161
+      ]
+    },
+    {
+      "did": "369",
+      "county": "City limits of Roanoke",
+      "city": "Roanoke",
+      "mie": 74,
+      "lodging": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ]
+    },
+    {
+      "did": "371",
+      "county": "City of Virginia Beach",
+      "city": "Virginia Beach",
+      "mie": 74,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        212,
+        212,
+        212,
+        129,
+        129,
+        129,
+        129
+      ]
+    },
+    {
+      "did": "372",
+      "county": "Accomack",
+      "city": "Wallops Island",
+      "mie": 68,
+      "lodging": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        262,
+        262,
+        132,
+        132,
+        132,
+        132
+      ]
+    },
+    {
+      "did": "374",
+      "county": "James City / York Counties / City of Williamsburg",
+      "city": "Williamsburg / York",
+      "mie": 80,
+      "lodging": [
+        113,
+        113,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        113,
+        113,
+        113,
+        113
+      ]
+    }
+  ]
+}

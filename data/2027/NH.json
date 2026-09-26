@@ -1,0 +1,150 @@
+{
+  "state": "NH",
+  "fiscalYear": 2027,
+  "standard": {
+    "lodging": 113,
+    "mie": 68
+  },
+  "locations": [
+    {
+      "did": "232",
+      "county": "Merrimack",
+      "city": "Concord",
+      "mie": 74,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127,
+        127
+      ]
+    },
+    {
+      "did": "233",
+      "county": "Carroll",
+      "city": "Conway",
+      "mie": 80,
+      "lodging": [
+        131,
+        131,
+        131,
+        131,
+        131,
+        168,
+        168,
+        168,
+        168,
+        168,
+        131,
+        131
+      ]
+    },
+    {
+      "did": "234",
+      "county": "Strafford",
+      "city": "Durham",
+      "mie": 74,
+      "lodging": [
+        127,
+        127,
+        127,
+        127,
+        127,
+        156,
+        156,
+        156,
+        127,
+        127,
+        127,
+        127
+      ]
+    },
+    {
+      "did": "235",
+      "county": "Belknap",
+      "city": "Laconia",
+      "mie": 74,
+      "lodging": [
+        145,
+        145,
+        145,
+        145,
+        145,
+        191,
+        191,
+        191,
+        191,
+        191,
+        145,
+        145
+      ]
+    },
+    {
+      "did": "236",
+      "county": "Grafton",
+      "city": "Lebanon / Lincoln / West Lebanon",
+      "mie": 74,
+      "lodging": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        186,
+        186,
+        186,
+        186,
+        186,
+        150,
+        150
+      ]
+    },
+    {
+      "did": "237",
+      "county": "Hillsborough",
+      "city": "Manchester",
+      "mie": 74,
+      "lodging": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "did": "238",
+      "county": "Rockingham",
+      "city": "Portsmouth",
+      "mie": 74,
+      "lodging": [
+        129,
+        129,
+        129,
+        129,
+        129,
+        186,
+        186,
+        186,
+        186,
+        186,
+        129,
+        129
+      ]
+    }
+  ]
+}
