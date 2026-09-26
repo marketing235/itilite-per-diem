@@ -162,7 +162,13 @@ fixtures/raw-conus-lodging-{fy}.json   one raw GSA response per FY kept locally 
   labelled `"Standard Rate"`). Every other state must have a non-null `standard`.
 
 ### `cms/states.csv`
-Columns: `Name,Slug,Abbreviation,Region,Featured` — 49 rows, in the order of the state list below.
+Columns: `Name,Slug,Abbreviation,Region,Featured,County table HTML` — 49 rows, in the order of the
+state list below. Every field is quoted, with embedded double quotes doubled (standard CSV); the
+`County table HTML` field's line breaks are kept as literal newlines inside the quoted field. That
+column carries each state's **FY2027** `cms/tables/2027/{ST}.html` content verbatim, so a single
+CSV import can seed the Webflow CMS collection's county-table field alongside the other columns.
+A future pull's later fiscal year does not change which FY populates this column until this file
+says so.
 
 ### `cms/tables/{fy}/{ST}.html`
 Plain HTML, no inline styles, no scripts. Structure *(the exact Webflow field type — rich text vs

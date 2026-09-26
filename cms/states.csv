@@ -1,50 +1,636 @@
-"Name","Slug","Abbreviation","Region","Featured"
-"Connecticut","connecticut","CT","Northeast","false"
-"Maine","maine","ME","Northeast","false"
-"Massachusetts","massachusetts","MA","Northeast","true"
-"New Hampshire","new-hampshire","NH","Northeast","false"
-"New Jersey","new-jersey","NJ","Northeast","false"
-"New York","new-york","NY","Northeast","true"
-"Pennsylvania","pennsylvania","PA","Northeast","false"
-"Rhode Island","rhode-island","RI","Northeast","false"
-"Vermont","vermont","VT","Northeast","false"
-"Illinois","illinois","IL","Midwest","true"
-"Indiana","indiana","IN","Midwest","false"
-"Iowa","iowa","IA","Midwest","false"
-"Kansas","kansas","KS","Midwest","false"
-"Michigan","michigan","MI","Midwest","false"
-"Minnesota","minnesota","MN","Midwest","false"
-"Missouri","missouri","MO","Midwest","false"
-"Nebraska","nebraska","NE","Midwest","false"
-"North Dakota","north-dakota","ND","Midwest","false"
-"Ohio","ohio","OH","Midwest","false"
-"South Dakota","south-dakota","SD","Midwest","false"
-"Wisconsin","wisconsin","WI","Midwest","false"
-"Alabama","alabama","AL","South","false"
-"Arkansas","arkansas","AR","South","false"
-"Delaware","delaware","DE","South","false"
-"Washington D.C.","washington-dc","DC","South","true"
-"Florida","florida","FL","South","true"
-"Georgia","georgia","GA","South","true"
-"Kentucky","kentucky","KY","South","false"
-"Louisiana","louisiana","LA","South","false"
-"Maryland","maryland","MD","South","false"
-"Mississippi","mississippi","MS","South","false"
-"North Carolina","north-carolina","NC","South","false"
-"Oklahoma","oklahoma","OK","South","false"
-"South Carolina","south-carolina","SC","South","false"
-"Tennessee","tennessee","TN","South","false"
-"Texas","texas","TX","South","true"
-"Virginia","virginia","VA","South","false"
-"West Virginia","west-virginia","WV","South","false"
-"Arizona","arizona","AZ","West","false"
-"California","california","CA","West","true"
-"Colorado","colorado","CO","West","false"
-"Idaho","idaho","ID","West","false"
-"Montana","montana","MT","West","false"
-"Nevada","nevada","NV","West","false"
-"New Mexico","new-mexico","NM","West","false"
-"Oregon","oregon","OR","West","false"
-"Utah","utah","UT","West","false"
-"Washington","washington","WA","West","true"
-"Wyoming","wyoming","WY","West","false"
+"Name","Slug","Abbreviation","Region","Featured","County table HTML"
+"Connecticut","connecticut","CT","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bridgeport / Danbury</td><td>Fairfield</td><td>$156</td><td>$86</td><td>$242</td></tr>
+    <tr><td>Hartford</td><td>Hartford</td><td>$146</td><td>$80</td><td>$226</td></tr>
+    <tr><td>New Haven</td><td>New Haven</td><td>$132</td><td>$80</td><td>$212</td></tr>
+    <tr><td>New London / Groton</td><td>New London</td><td>$149</td><td>$86</td><td>$235</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Connecticut locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Maine","maine","ME","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bar Harbor / Rockport</td><td>Hancock / Knox</td><td>$137–$320</td><td>$92</td><td>$229–$412</td></tr>
+    <tr><td>Kennebunk / Kittery / Sanford</td><td>York</td><td>$130–$229</td><td>$86</td><td>$216–$315</td></tr>
+    <tr><td>Portland</td><td>Cumberland / Sagadahoc</td><td>$119–$216</td><td>$80</td><td>$199–$296</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Maine locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Massachusetts","massachusetts","MA","Northeast","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Andover</td><td>Essex</td><td>$137</td><td>$80</td><td>$217</td></tr>
+    <tr><td>Boston / Cambridge</td><td>Suffolk, city of Cambridge</td><td>$213–$365</td><td>$92</td><td>$305–$457</td></tr>
+    <tr><td>Burlington / Woburn</td><td>Middlesex less the city of Cambridge</td><td>$152–$187</td><td>$86</td><td>$238–$273</td></tr>
+    <tr><td>Falmouth</td><td>City limits of Falmouth</td><td>$138–$247</td><td>$86</td><td>$224–$333</td></tr>
+    <tr><td>Hyannis</td><td>Barnstable less the city of Falmouth</td><td>$131–$220</td><td>$92</td><td>$223–$312</td></tr>
+    <tr><td>Martha&#39;s Vineyard</td><td>Dukes</td><td>$199–$473</td><td>$92</td><td>$291–$565</td></tr>
+    <tr><td>Nantucket</td><td>Nantucket</td><td>$171–$487</td><td>$92</td><td>$263–$579</td></tr>
+    <tr><td>Northampton</td><td>Hampshire</td><td>$157</td><td>$80</td><td>$237</td></tr>
+    <tr><td>Pittsfield</td><td>Berkshire</td><td>$142–$188</td><td>$86</td><td>$228–$274</td></tr>
+    <tr><td>Plymouth / Taunton / New Bedford</td><td>Plymouth / Bristol</td><td>$127</td><td>$80</td><td>$207</td></tr>
+    <tr><td>Quincy</td><td>Norfolk</td><td>$146–$190</td><td>$80</td><td>$226–$270</td></tr>
+    <tr><td>Springfield</td><td>Hampden</td><td>$131</td><td>$74</td><td>$205</td></tr>
+    <tr><td>Worcester</td><td>Worcester</td><td>$140</td><td>$80</td><td>$220</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Massachusetts locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"New Hampshire","new-hampshire","NH","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Concord</td><td>Merrimack</td><td>$127</td><td>$74</td><td>$201</td></tr>
+    <tr><td>Conway</td><td>Carroll</td><td>$131–$168</td><td>$80</td><td>$211–$248</td></tr>
+    <tr><td>Durham</td><td>Strafford</td><td>$127–$156</td><td>$74</td><td>$201–$230</td></tr>
+    <tr><td>Laconia</td><td>Belknap</td><td>$145–$191</td><td>$74</td><td>$219–$265</td></tr>
+    <tr><td>Lebanon / Lincoln / West Lebanon</td><td>Grafton</td><td>$150–$186</td><td>$74</td><td>$224–$260</td></tr>
+    <tr><td>Manchester</td><td>Hillsborough</td><td>$136</td><td>$74</td><td>$210</td></tr>
+    <tr><td>Portsmouth</td><td>Rockingham</td><td>$129–$186</td><td>$74</td><td>$203–$260</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other New Hampshire locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"New Jersey","new-jersey","NJ","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Cherry Hill / Moorestown</td><td>Camden / Burlington</td><td>$115</td><td>$80</td><td>$195</td></tr>
+    <tr><td>Eatontown / Freehold</td><td>Monmouth</td><td>$148</td><td>$86</td><td>$234</td></tr>
+    <tr><td>Edison / Piscataway</td><td>Middlesex</td><td>$123</td><td>$80</td><td>$203</td></tr>
+    <tr><td>Flemington</td><td>Hunterdon</td><td>$128</td><td>$80</td><td>$208</td></tr>
+    <tr><td>Newark</td><td>Essex / Bergen / Hudson / Passaic</td><td>$164–$175</td><td>$86</td><td>$250–$261</td></tr>
+    <tr><td>Parsippany</td><td>Morris</td><td>$148</td><td>$80</td><td>$228</td></tr>
+    <tr><td>Princeton / Trenton</td><td>Mercer</td><td>$151</td><td>$86</td><td>$237</td></tr>
+    <tr><td>Somerset</td><td>Somerset</td><td>$147</td><td>$80</td><td>$227</td></tr>
+    <tr><td>Springfield / Cranford / New Providence</td><td>Union</td><td>$141</td><td>$80</td><td>$221</td></tr>
+    <tr><td>Toms River</td><td>Ocean</td><td>$169–$217</td><td>$74</td><td>$243–$291</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other New Jersey locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"New York","new-york","NY","Northeast","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Albany</td><td>Albany</td><td>$133</td><td>$86</td><td>$219</td></tr>
+    <tr><td>Binghamton</td><td>Broome</td><td>$127</td><td>$74</td><td>$201</td></tr>
+    <tr><td>Buffalo</td><td>Erie</td><td>$144</td><td>$80</td><td>$224</td></tr>
+    <tr><td>Floral Park / Garden City / Great Neck</td><td>Nassau</td><td>$172</td><td>$86</td><td>$258</td></tr>
+    <tr><td>Glens Falls</td><td>Warren</td><td>$121–$195</td><td>$86</td><td>$207–$281</td></tr>
+    <tr><td>Ithaca</td><td>Tompkins</td><td>$145</td><td>$80</td><td>$225</td></tr>
+    <tr><td>Kingston</td><td>Ulster</td><td>$141</td><td>$86</td><td>$227</td></tr>
+    <tr><td>Lake Placid</td><td>Essex</td><td>$145–$225</td><td>$86</td><td>$231–$311</td></tr>
+    <tr><td>New York City</td><td>Bronx / Kings / New York / Queens / Richmond</td><td>$189–$358</td><td>$92</td><td>$281–$450</td></tr>
+    <tr><td>Niagara Falls</td><td>Niagara</td><td>$113–$148</td><td>$80</td><td>$193–$228</td></tr>
+    <tr><td>Nyack / Palisades</td><td>Rockland</td><td>$134</td><td>$80</td><td>$214</td></tr>
+    <tr><td>Poughkeepsie</td><td>Dutchess</td><td>$124</td><td>$80</td><td>$204</td></tr>
+    <tr><td>Riverhead / Ronkonkoma / Melville</td><td>Suffolk</td><td>$163</td><td>$86</td><td>$249</td></tr>
+    <tr><td>Rochester</td><td>Monroe</td><td>$136</td><td>$80</td><td>$216</td></tr>
+    <tr><td>Saratoga Springs / Schenectady</td><td>Saratoga / Schenectady</td><td>$137–$219</td><td>$80</td><td>$217–$299</td></tr>
+    <tr><td>Syracuse / Oswego</td><td>Onondaga / Oswego</td><td>$136</td><td>$80</td><td>$216</td></tr>
+    <tr><td>Tarrytown / White Plains / New Rochelle</td><td>Westchester</td><td>$168</td><td>$92</td><td>$260</td></tr>
+    <tr><td>Troy</td><td>Rensselaer</td><td>$129</td><td>$80</td><td>$209</td></tr>
+    <tr><td>West Point</td><td>Orange</td><td>$129</td><td>$80</td><td>$209</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other New York locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Pennsylvania","pennsylvania","PA","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bucks</td><td>Bucks</td><td>$121</td><td>$80</td><td>$201</td></tr>
+    <tr><td>Chester / Radnor / Essington</td><td>Delaware</td><td>$129</td><td>$80</td><td>$209</td></tr>
+    <tr><td>Gettysburg</td><td>Adams</td><td>$120</td><td>$68</td><td>$188</td></tr>
+    <tr><td>Harrisburg</td><td>Dauphin  excluding Hershey</td><td>$129</td><td>$74</td><td>$203</td></tr>
+    <tr><td>Hershey</td><td>Hershey</td><td>$151–$207</td><td>$80</td><td>$231–$287</td></tr>
+    <tr><td>Lancaster</td><td>Lancaster</td><td>$125</td><td>$74</td><td>$199</td></tr>
+    <tr><td>Malvern / Frazer / Berwyn</td><td>Chester</td><td>$132</td><td>$80</td><td>$212</td></tr>
+    <tr><td>Montgomery</td><td>Montgomery</td><td>$129</td><td>$80</td><td>$209</td></tr>
+    <tr><td>Philadelphia</td><td>Philadelphia</td><td>$174–$227</td><td>$92</td><td>$266–$319</td></tr>
+    <tr><td>Pittsburgh</td><td>Allegheny</td><td>$144</td><td>$80</td><td>$224</td></tr>
+    <tr><td>Reading</td><td>Berks</td><td>$122</td><td>$74</td><td>$196</td></tr>
+    <tr><td>State College</td><td>Centre</td><td>$132</td><td>$74</td><td>$206</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Pennsylvania locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Rhode Island","rhode-island","RI","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Jamestown / Middletown / Newport</td><td>Newport</td><td>$150–$274</td><td>$80</td><td>$230–$354</td></tr>
+    <tr><td>Providence / Bristol</td><td>Providence / Bristol</td><td>$161</td><td>$80</td><td>$241</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Rhode Island locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Vermont","vermont","VT","Northeast","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Burlington</td><td>Chittenden</td><td>$131–$214</td><td>$86</td><td>$217–$300</td></tr>
+    <tr><td>Manchester</td><td>Bennington</td><td>$171–$223</td><td>$86</td><td>$257–$309</td></tr>
+    <tr><td>Montpelier</td><td>Washington</td><td>$167–$227</td><td>$74</td><td>$241–$301</td></tr>
+    <tr><td>Stowe</td><td>Lamoille</td><td>$184</td><td>$86</td><td>$270</td></tr>
+    <tr><td>White River Junction</td><td>Windsor</td><td>$134–$172</td><td>$86</td><td>$220–$258</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Vermont locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Illinois","illinois","IL","Midwest","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bolingbrook / Romeoville / Lemont</td><td>Will</td><td>$119</td><td>$74</td><td>$193</td></tr>
+    <tr><td>Chicago</td><td>Cook / Lake</td><td>$148–$238</td><td>$92</td><td>$240–$330</td></tr>
+    <tr><td>East St. Louis / O&#39;Fallon / Fairview Heights</td><td>St. Clair</td><td>$156</td><td>$86</td><td>$242</td></tr>
+    <tr><td>Oakbrook Terrace</td><td>DuPage</td><td>$123</td><td>$80</td><td>$203</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Illinois locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Indiana","indiana","IN","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Bloomington</td><td>Monroe</td><td>$121–$154</td><td>$74</td><td>$195–$228</td></tr>
+    <tr><td>Indianapolis / Carmel</td><td>Marion / Hamilton</td><td>$140</td><td>$80</td><td>$220</td></tr>
+    <tr><td>Lafayette / West Lafayette</td><td>Tippecanoe</td><td>$132</td><td>$74</td><td>$206</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Indiana locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Iowa","iowa","IA","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Dallas</td><td>Dallas</td><td>$117</td><td>$80</td><td>$197</td></tr>
+    <tr><td>Des Moines</td><td>Polk</td><td>$122</td><td>$80</td><td>$202</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Iowa locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Kansas","kansas","KS","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Kansas City / Overland Park</td><td>Wyandotte / Johnson / Leavenworth</td><td>$139</td><td>$80</td><td>$219</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Kansas locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Michigan","michigan","MI","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Ann Arbor</td><td>Washtenaw</td><td>$140</td><td>$80</td><td>$220</td></tr>
+    <tr><td>Detroit</td><td>Wayne</td><td>$160</td><td>$74</td><td>$234</td></tr>
+    <tr><td>Grand Rapids</td><td>Kent</td><td>$120</td><td>$80</td><td>$200</td></tr>
+    <tr><td>Holland</td><td>Ottawa</td><td>$118–$158</td><td>$74</td><td>$192–$232</td></tr>
+    <tr><td>Mackinac Island</td><td>Mackinac</td><td>$122–$197</td><td>$86</td><td>$208–$283</td></tr>
+    <tr><td>Midland</td><td>Midland</td><td>$138</td><td>$74</td><td>$212</td></tr>
+    <tr><td>Muskegon</td><td>Muskegon</td><td>$113–$157</td><td>$68</td><td>$181–$225</td></tr>
+    <tr><td>Petoskey</td><td>Emmet</td><td>$123–$230</td><td>$86</td><td>$209–$316</td></tr>
+    <tr><td>Pontiac / Auburn Hills</td><td>Oakland</td><td>$120</td><td>$80</td><td>$200</td></tr>
+    <tr><td>South Haven</td><td>Van Buren</td><td>$113–$148</td><td>$68</td><td>$181–$216</td></tr>
+    <tr><td>Traverse City</td><td>Grand Traverse</td><td>$134–$235</td><td>$80</td><td>$214–$315</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Michigan locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Minnesota","minnesota","MN","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Duluth</td><td>St. Louis</td><td>$159–$220</td><td>$86</td><td>$245–$306</td></tr>
+    <tr><td>Minneapolis / St. Paul</td><td>Hennepin / Ramsey</td><td>$153</td><td>$92</td><td>$245</td></tr>
+    <tr><td>Rochester</td><td>Olmsted</td><td>$139</td><td>$80</td><td>$219</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Minnesota locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Missouri","missouri","MO","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Kansas City</td><td>Jackson / Clay / Cass / Platte</td><td>$139</td><td>$80</td><td>$219</td></tr>
+    <tr><td>St. Louis</td><td>St. Louis / St. Louis City / St. Charles</td><td>$156</td><td>$86</td><td>$242</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Missouri locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Nebraska","nebraska","NE","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Omaha</td><td>Douglas</td><td>$128</td><td>$80</td><td>$208</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Nebraska locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"North Dakota","north-dakota","ND","Midwest","false","<p class=""perdiem_table-note"">All North Dakota locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Ohio","ohio","OH","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Cincinnati</td><td>Hamilton / Clermont</td><td>$170</td><td>$86</td><td>$256</td></tr>
+    <tr><td>Cleveland</td><td>Cuyahoga</td><td>$167</td><td>$80</td><td>$247</td></tr>
+    <tr><td>Columbus</td><td>Franklin</td><td>$138</td><td>$80</td><td>$218</td></tr>
+    <tr><td>Dayton / Fairborn</td><td>Greene / Montgomery</td><td>$120</td><td>$74</td><td>$194</td></tr>
+    <tr><td>Hamilton</td><td>Butler / Warren</td><td>$131</td><td>$74</td><td>$205</td></tr>
+    <tr><td>Sandusky</td><td>Erie</td><td>$120–$174</td><td>$68</td><td>$188–$242</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Ohio locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"South Dakota","south-dakota","SD","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Deadwood / Spearfish</td><td>Lawrence</td><td>$113–$168</td><td>$80</td><td>$193–$248</td></tr>
+    <tr><td>Hot Springs</td><td>Fall River / Custer</td><td>$113–$161</td><td>$74</td><td>$187–$235</td></tr>
+    <tr><td>Rapid City</td><td>Pennington</td><td>$113–$173</td><td>$74</td><td>$187–$247</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other South Dakota locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Wisconsin","wisconsin","WI","Midwest","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Madison</td><td>Dane</td><td>$113–$138</td><td>$80</td><td>$193–$218</td></tr>
+    <tr><td>Milwaukee</td><td>Milwaukee</td><td>$144</td><td>$80</td><td>$224</td></tr>
+    <tr><td>Sturgeon Bay</td><td>Door</td><td>$113–$139</td><td>$80</td><td>$193–$219</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Wisconsin locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Alabama","alabama","AL","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Birmingham</td><td>Jefferson</td><td>$135</td><td>$80</td><td>$215</td></tr>
+    <tr><td>Gulf Shores</td><td>Baldwin</td><td>$144–$221</td><td>$74</td><td>$218–$295</td></tr>
+    <tr><td>Huntsville</td><td>Madison</td><td>$146</td><td>$74</td><td>$220</td></tr>
+    <tr><td>Mobile</td><td>Mobile</td><td>$126</td><td>$74</td><td>$200</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Alabama locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Arkansas","arkansas","AR","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Hot Springs</td><td>Garland</td><td>$115</td><td>$68</td><td>$183</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Arkansas locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Delaware","delaware","DE","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Lewes</td><td>Sussex</td><td>$126–$216</td><td>$74</td><td>$200–$290</td></tr>
+    <tr><td>Wilmington</td><td>New Castle</td><td>$127</td><td>$74</td><td>$201</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Delaware locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Washington D.C.","washington-dc","DC","South","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>District of Columbia</td><td>Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George&#39;s in Maryland)</td><td>$192–$295</td><td>$92</td><td>$284–$387</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">This rate applies to all of Washington D.C. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Florida","florida","FL","South","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Boca Raton / Delray Beach / Jupiter</td><td>Palm Beach / Hendry</td><td>$157–$265</td><td>$86</td><td>$243–$351</td></tr>
+    <tr><td>Bradenton</td><td>Manatee</td><td>$151–$237</td><td>$80</td><td>$231–$317</td></tr>
+    <tr><td>Cocoa Beach</td><td>Brevard</td><td>$166–$212</td><td>$74</td><td>$240–$286</td></tr>
+    <tr><td>Daytona Beach</td><td>Volusia</td><td>$128–$158</td><td>$80</td><td>$208–$238</td></tr>
+    <tr><td>Fort Lauderdale</td><td>Broward</td><td>$150–$232</td><td>$86</td><td>$236–$318</td></tr>
+    <tr><td>Fort Myers</td><td>Lee</td><td>$141–$213</td><td>$80</td><td>$221–$293</td></tr>
+    <tr><td>Fort Walton Beach / De Funiak Springs</td><td>Okaloosa / Walton</td><td>$113–$274</td><td>$86</td><td>$199–$360</td></tr>
+    <tr><td>Gulf Breeze</td><td>Santa Rosa</td><td>$131–$210</td><td>$74</td><td>$205–$284</td></tr>
+    <tr><td>Key West</td><td>Monroe</td><td>$267–$452</td><td>$86</td><td>$353–$538</td></tr>
+    <tr><td>Miami</td><td>Miami-Dade</td><td>$151–$244</td><td>$92</td><td>$243–$336</td></tr>
+    <tr><td>Naples</td><td>Collier</td><td>$170–$326</td><td>$80</td><td>$250–$406</td></tr>
+    <tr><td>Orlando</td><td>Orange</td><td>$145–$178</td><td>$80</td><td>$225–$258</td></tr>
+    <tr><td>Panama City</td><td>Bay</td><td>$115–$195</td><td>$80</td><td>$195–$275</td></tr>
+    <tr><td>Pensacola</td><td>Escambia</td><td>$127–$188</td><td>$74</td><td>$201–$262</td></tr>
+    <tr><td>Punta Gorda</td><td>Charlotte</td><td>$127–$202</td><td>$74</td><td>$201–$276</td></tr>
+    <tr><td>Sarasota</td><td>Sarasota</td><td>$131–$205</td><td>$86</td><td>$217–$291</td></tr>
+    <tr><td>Sebring</td><td>Highlands</td><td>$148–$236</td><td>$74</td><td>$222–$310</td></tr>
+    <tr><td>St. Augustine</td><td>St. Johns</td><td>$157–$178</td><td>$80</td><td>$237–$258</td></tr>
+    <tr><td>Stuart</td><td>Martin</td><td>$154–$238</td><td>$80</td><td>$234–$318</td></tr>
+    <tr><td>Tallahassee</td><td>Leon</td><td>$113–$138</td><td>$80</td><td>$193–$218</td></tr>
+    <tr><td>Tampa / St. Petersburg</td><td>Pinellas / Hillsborough</td><td>$155–$212</td><td>$80</td><td>$235–$292</td></tr>
+    <tr><td>Vero Beach</td><td>Indian River</td><td>$181–$259</td><td>$74</td><td>$255–$333</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Florida locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Georgia","georgia","GA","South","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Athens</td><td>Clarke</td><td>$154</td><td>$74</td><td>$228</td></tr>
+    <tr><td>Atlanta</td><td>Fulton / Dekalb</td><td>$188–$207</td><td>$86</td><td>$274–$293</td></tr>
+    <tr><td>Augusta</td><td>Richmond</td><td>$113–$131</td><td>$74</td><td>$187–$205</td></tr>
+    <tr><td>Jekyll Island / Brunswick</td><td>Glynn</td><td>$176–$230</td><td>$86</td><td>$262–$316</td></tr>
+    <tr><td>Marietta</td><td>Cobb</td><td>$131</td><td>$74</td><td>$205</td></tr>
+    <tr><td>Savannah</td><td>Chatham</td><td>$153–$186</td><td>$80</td><td>$233–$266</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Georgia locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Kentucky","kentucky","KY","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Boone</td><td>Boone</td><td>$119</td><td>$68</td><td>$187</td></tr>
+    <tr><td>Kenton</td><td>Kenton</td><td>$170</td><td>$86</td><td>$256</td></tr>
+    <tr><td>Lexington</td><td>Fayette</td><td>$125</td><td>$80</td><td>$205</td></tr>
+    <tr><td>Louisville</td><td>Jefferson</td><td>$132–$185</td><td>$80</td><td>$212–$265</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Kentucky locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Louisiana","louisiana","LA","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Alexandria / Leesville / Natchitoches</td><td>Allen / Jefferson Davis / Natchitoches / Rapides / Vernon Parishes</td><td>$118</td><td>$68</td><td>$186</td></tr>
+    <tr><td>New Orleans</td><td>Orleans / Jefferson Parishes</td><td>$138–$188</td><td>$80</td><td>$218–$268</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Louisiana locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Maryland","maryland","MD","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Aberdeen / Bel Air / Belcamp</td><td>Harford</td><td>$117</td><td>$74</td><td>$191</td></tr>
+    <tr><td>Annapolis</td><td>Anne Arundel</td><td>$130–$169</td><td>$80</td><td>$210–$249</td></tr>
+    <tr><td>Baltimore City</td><td>Baltimore City</td><td>$166</td><td>$86</td><td>$252</td></tr>
+    <tr><td>Cambridge / St. Michaels</td><td>Dorchester / Talbot</td><td>$147–$195</td><td>$80</td><td>$227–$275</td></tr>
+    <tr><td>Centreville</td><td>Queen Anne</td><td>$127–$164</td><td>$74</td><td>$201–$238</td></tr>
+    <tr><td>Columbia</td><td>Howard</td><td>$116</td><td>$86</td><td>$202</td></tr>
+    <tr><td>District of Columbia</td><td>Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George&#39;s in Maryland)</td><td>$192–$295</td><td>$92</td><td>$284–$387</td></tr>
+    <tr><td>Ocean City</td><td>Worcester</td><td>$115–$306</td><td>$80</td><td>$195–$386</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Maryland locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Mississippi","mississippi","MS","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Oxford</td><td>Lafayette</td><td>$146</td><td>$68</td><td>$214</td></tr>
+    <tr><td>Southaven</td><td>Desoto</td><td>$132</td><td>$68</td><td>$200</td></tr>
+    <tr><td>Starkville</td><td>Oktibbeha</td><td>$133</td><td>$68</td><td>$201</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Mississippi locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"North Carolina","north-carolina","NC","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Asheville</td><td>Buncombe</td><td>$125–$145</td><td>$80</td><td>$205–$225</td></tr>
+    <tr><td>Atlantic Beach / Morehead City</td><td>Carteret</td><td>$123–$178</td><td>$74</td><td>$197–$252</td></tr>
+    <tr><td>Chapel Hill</td><td>Orange</td><td>$153</td><td>$80</td><td>$233</td></tr>
+    <tr><td>Charlotte</td><td>Mecklenburg</td><td>$143</td><td>$80</td><td>$223</td></tr>
+    <tr><td>Durham</td><td>Durham</td><td>$124</td><td>$74</td><td>$198</td></tr>
+    <tr><td>Fayetteville</td><td>Cumberland</td><td>$129</td><td>$68</td><td>$197</td></tr>
+    <tr><td>Greensboro</td><td>Guilford</td><td>$116–$130</td><td>$74</td><td>$190–$204</td></tr>
+    <tr><td>Kill Devil Hills</td><td>Dare</td><td>$120–$267</td><td>$74</td><td>$194–$341</td></tr>
+    <tr><td>Raleigh</td><td>Wake</td><td>$142</td><td>$74</td><td>$216</td></tr>
+    <tr><td>Wilmington</td><td>New Hanover</td><td>$113–$170</td><td>$74</td><td>$187–$244</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other North Carolina locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Oklahoma","oklahoma","OK","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Oklahoma City</td><td>Oklahoma</td><td>$121</td><td>$80</td><td>$201</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Oklahoma locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"South Carolina","south-carolina","SC","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Charleston</td><td>Charleston / Berkeley / Dorchester</td><td>$218–$288</td><td>$92</td><td>$310–$380</td></tr>
+    <tr><td>Columbia</td><td>Richland / Lexington</td><td>$115</td><td>$74</td><td>$189</td></tr>
+    <tr><td>Hilton Head</td><td>Beaufort</td><td>$132–$226</td><td>$80</td><td>$212–$306</td></tr>
+    <tr><td>Myrtle Beach</td><td>Horry</td><td>$113–$202</td><td>$74</td><td>$187–$276</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other South Carolina locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Tennessee","tennessee","TN","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Brentwood / Franklin</td><td>Williamson</td><td>$135</td><td>$86</td><td>$221</td></tr>
+    <tr><td>Chattanooga</td><td>Hamilton</td><td>$120</td><td>$74</td><td>$194</td></tr>
+    <tr><td>Knoxville</td><td>Knox</td><td>$129</td><td>$74</td><td>$203</td></tr>
+    <tr><td>Memphis</td><td>Shelby</td><td>$135</td><td>$74</td><td>$209</td></tr>
+    <tr><td>Nashville</td><td>Davidson</td><td>$230</td><td>$86</td><td>$316</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Tennessee locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Texas","texas","TX","South","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Arlington / Fort Worth / Grapevine</td><td>Tarrant  / City of Grapevine</td><td>$192</td><td>$80</td><td>$272</td></tr>
+    <tr><td>Austin</td><td>Travis</td><td>$184</td><td>$80</td><td>$264</td></tr>
+    <tr><td>Big Spring</td><td>Howard</td><td>$133</td><td>$68</td><td>$201</td></tr>
+    <tr><td>Dallas</td><td>Dallas</td><td>$184</td><td>$80</td><td>$264</td></tr>
+    <tr><td>Galveston</td><td>Galveston</td><td>$116–$154</td><td>$74</td><td>$190–$228</td></tr>
+    <tr><td>Houston</td><td>Montgomery / Fort Bend / Harris</td><td>$133</td><td>$80</td><td>$213</td></tr>
+    <tr><td>Midland / Odessa</td><td>Midland / Andrews / Ector / Martin</td><td>$136</td><td>$74</td><td>$210</td></tr>
+    <tr><td>Pecos</td><td>Reeves</td><td>$125</td><td>$74</td><td>$199</td></tr>
+    <tr><td>Plano</td><td>Collin</td><td>$133</td><td>$80</td><td>$213</td></tr>
+    <tr><td>San Antonio</td><td>Bexar</td><td>$149</td><td>$74</td><td>$223</td></tr>
+    <tr><td>South Padre Island</td><td>Cameron</td><td>$123–$160</td><td>$74</td><td>$197–$234</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Texas locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Virginia","virginia","VA","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Blacksburg</td><td>Montgomery</td><td>$126</td><td>$68</td><td>$194</td></tr>
+    <tr><td>Charlottesville</td><td>City of Charlottesville / Albemarle</td><td>$142</td><td>$80</td><td>$222</td></tr>
+    <tr><td>District of Columbia</td><td>Washington DC (also the cities of Alexandria, Falls Church and Fairfax, and the counties of Arlington and Fairfax, in Virginia; and the counties of Montgomery and Prince George&#39;s in Maryland)</td><td>$192–$295</td><td>$92</td><td>$284–$387</td></tr>
+    <tr><td>Loudoun</td><td>Loudoun</td><td>$121</td><td>$80</td><td>$201</td></tr>
+    <tr><td>Lynchburg</td><td>Campbell / Lynchburg City</td><td>$124</td><td>$68</td><td>$192</td></tr>
+    <tr><td>Richmond</td><td>City of Richmond</td><td>$161</td><td>$80</td><td>$241</td></tr>
+    <tr><td>Roanoke</td><td>City limits of Roanoke</td><td>$125</td><td>$74</td><td>$199</td></tr>
+    <tr><td>Virginia Beach</td><td>City of Virginia Beach</td><td>$129–$212</td><td>$74</td><td>$203–$286</td></tr>
+    <tr><td>Wallops Island</td><td>Accomack</td><td>$132–$262</td><td>$68</td><td>$200–$330</td></tr>
+    <tr><td>Williamsburg / York</td><td>James City / York Counties / City of Williamsburg</td><td>$113–$135</td><td>$80</td><td>$193–$215</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Virginia locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"West Virginia","west-virginia","WV","South","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Charles Town</td><td>Jefferson</td><td>$128</td><td>$68</td><td>$196</td></tr>
+    <tr><td>Charleston</td><td>Kanawha</td><td>$117</td><td>$68</td><td>$185</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other West Virginia locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Arizona","arizona","AZ","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Grand Canyon / Flagstaff</td><td>Coconino / Yavapai less the city of Sedona</td><td>$113–$152</td><td>$80</td><td>$193–$232</td></tr>
+    <tr><td>Kayenta</td><td>Navajo</td><td>$147</td><td>$74</td><td>$221</td></tr>
+    <tr><td>Phoenix / Scottsdale</td><td>Maricopa</td><td>$122–$232</td><td>$86</td><td>$208–$318</td></tr>
+    <tr><td>Sedona</td><td>City Limits of Sedona</td><td>$172–$282</td><td>$92</td><td>$264–$374</td></tr>
+    <tr><td>Tucson</td><td>Pima</td><td>$154–$208</td><td>$80</td><td>$234–$288</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Arizona locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"California","california","CA","West","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Antioch / Brentwood / Concord</td><td>Contra Costa</td><td>$147</td><td>$86</td><td>$233</td></tr>
+    <tr><td>Bakersfield / Ridgecrest</td><td>Kern</td><td>$164</td><td>$74</td><td>$238</td></tr>
+    <tr><td>Barstow / Ontario / Victorville</td><td>San Bernardino</td><td>$129</td><td>$86</td><td>$215</td></tr>
+    <tr><td>Death Valley</td><td>Inyo / NAWS China Lake</td><td>$154</td><td>$80</td><td>$234</td></tr>
+    <tr><td>Eureka / Arcata / McKinleyville</td><td>Humboldt</td><td>$130–$181</td><td>$86</td><td>$216–$267</td></tr>
+    <tr><td>Fresno</td><td>Fresno</td><td>$136</td><td>$86</td><td>$222</td></tr>
+    <tr><td>Los Angeles</td><td>Los Angeles / Orange / Ventura / Edwards AFB less the city of Santa Monica</td><td>$199</td><td>$86</td><td>$285</td></tr>
+    <tr><td>Mammoth Lakes</td><td>Mono</td><td>$146–$208</td><td>$86</td><td>$232–$294</td></tr>
+    <tr><td>Mill Valley / San Rafael / Novato</td><td>Marin</td><td>$169</td><td>$92</td><td>$261</td></tr>
+    <tr><td>Monterey</td><td>Monterey</td><td>$196–$293</td><td>$92</td><td>$288–$385</td></tr>
+    <tr><td>Napa</td><td>Napa</td><td>$194–$266</td><td>$92</td><td>$286–$358</td></tr>
+    <tr><td>Oakhurst</td><td>Madera</td><td>$137</td><td>$80</td><td>$217</td></tr>
+    <tr><td>Oakland</td><td>Alameda</td><td>$152</td><td>$92</td><td>$244</td></tr>
+    <tr><td>Palm Springs</td><td>Riverside</td><td>$141–$192</td><td>$86</td><td>$227–$278</td></tr>
+    <tr><td>Point Arena / Gualala</td><td>Mendocino</td><td>$134</td><td>$86</td><td>$220</td></tr>
+    <tr><td>Sacramento</td><td>Sacramento</td><td>$156</td><td>$86</td><td>$242</td></tr>
+    <tr><td>San Diego</td><td>San Diego</td><td>$208–$249</td><td>$86</td><td>$294–$335</td></tr>
+    <tr><td>San Francisco</td><td>San Francisco</td><td>$232–$325</td><td>$92</td><td>$324–$417</td></tr>
+    <tr><td>San Luis Obispo</td><td>San Luis Obispo</td><td>$170–$213</td><td>$86</td><td>$256–$299</td></tr>
+    <tr><td>San Mateo / Foster City / Belmont</td><td>San Mateo</td><td>$194–$217</td><td>$86</td><td>$280–$303</td></tr>
+    <tr><td>Santa Barbara</td><td>Santa Barbara</td><td>$214–$277</td><td>$92</td><td>$306–$369</td></tr>
+    <tr><td>Santa Cruz</td><td>Santa Cruz</td><td>$149–$181</td><td>$86</td><td>$235–$267</td></tr>
+    <tr><td>Santa Monica</td><td>City limits of Santa Monica</td><td>$283</td><td>$92</td><td>$375</td></tr>
+    <tr><td>Santa Rosa</td><td>Sonoma</td><td>$163</td><td>$86</td><td>$249</td></tr>
+    <tr><td>South Lake Tahoe</td><td>El Dorado</td><td>$168–$262</td><td>$86</td><td>$254–$348</td></tr>
+    <tr><td>Stockton</td><td>San Joaquin</td><td>$137</td><td>$74</td><td>$211</td></tr>
+    <tr><td>Sunnyvale / Palo Alto / San Jose</td><td>Santa Clara</td><td>$218</td><td>$92</td><td>$310</td></tr>
+    <tr><td>Tahoe City</td><td>Placer</td><td>$132</td><td>$86</td><td>$218</td></tr>
+    <tr><td>Truckee</td><td>Nevada</td><td>$148–$178</td><td>$86</td><td>$234–$264</td></tr>
+    <tr><td>Visalia</td><td>Tulare</td><td>$136</td><td>$80</td><td>$216</td></tr>
+    <tr><td>West Sacramento / Davis</td><td>Yolo</td><td>$148</td><td>$80</td><td>$228</td></tr>
+    <tr><td>Yosemite National Park</td><td>Mariposa</td><td>$184–$212</td><td>$86</td><td>$270–$298</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other California locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Colorado","colorado","CO","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Aspen</td><td>Pitkin</td><td>$173–$419</td><td>$92</td><td>$265–$511</td></tr>
+    <tr><td>Boulder / Broomfield</td><td>Boulder / Broomfield</td><td>$125–$173</td><td>$80</td><td>$205–$253</td></tr>
+    <tr><td>Colorado Springs</td><td>El Paso</td><td>$128–$176</td><td>$86</td><td>$214–$262</td></tr>
+    <tr><td>Cortez</td><td>Montezuma</td><td>$113–$140</td><td>$74</td><td>$187–$214</td></tr>
+    <tr><td>Crested Butte / Gunnison</td><td>Gunnison</td><td>$140–$179</td><td>$86</td><td>$226–$265</td></tr>
+    <tr><td>Denver / Aurora</td><td>Denver / Adams / Arapahoe / Jefferson</td><td>$170–$227</td><td>$92</td><td>$262–$319</td></tr>
+    <tr><td>Douglas</td><td>Douglas</td><td>$113–$139</td><td>$80</td><td>$193–$219</td></tr>
+    <tr><td>Durango</td><td>La Plata</td><td>$122–$190</td><td>$80</td><td>$202–$270</td></tr>
+    <tr><td>Fort Collins / Loveland</td><td>Larimer</td><td>$120–$157</td><td>$80</td><td>$200–$237</td></tr>
+    <tr><td>Grand Lake</td><td>Grand</td><td>$128–$182</td><td>$86</td><td>$214–$268</td></tr>
+    <tr><td>Montrose</td><td>Montrose</td><td>$143–$194</td><td>$74</td><td>$217–$268</td></tr>
+    <tr><td>Silverthorne / Breckenridge</td><td>Summit</td><td>$164–$296</td><td>$92</td><td>$256–$388</td></tr>
+    <tr><td>Steamboat Springs</td><td>Routt</td><td>$126–$299</td><td>$92</td><td>$218–$391</td></tr>
+    <tr><td>Telluride</td><td>San Miguel</td><td>$186–$367</td><td>$92</td><td>$278–$459</td></tr>
+    <tr><td>Vail</td><td>Eagle</td><td>$205–$417</td><td>$92</td><td>$297–$509</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Colorado locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Idaho","idaho","ID","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Boise</td><td>Ada</td><td>$176–$201</td><td>$86</td><td>$262–$287</td></tr>
+    <tr><td>Coeur d&#39;Alene</td><td>Kootenai</td><td>$148–$227</td><td>$74</td><td>$222–$301</td></tr>
+    <tr><td>Sun Valley / Ketchum</td><td>Blaine / Elmore</td><td>$183–$316</td><td>$80</td><td>$263–$396</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Idaho locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Montana","montana","MT","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Big Sky / West Yellowstone/Gardiner</td><td>Gallatin/Park</td><td>$169–$326</td><td>$80</td><td>$249–$406</td></tr>
+    <tr><td>Helena</td><td>Lewis and Clark</td><td>$140</td><td>$74</td><td>$214</td></tr>
+    <tr><td>Kalispell/Whitefish</td><td>Flathead</td><td>$126–$244</td><td>$80</td><td>$206–$324</td></tr>
+    <tr><td>Missoula</td><td>Missoula</td><td>$135–$199</td><td>$74</td><td>$209–$273</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Montana locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Nevada","nevada","NV","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Incline Village / Reno / Sparks</td><td>Washoe</td><td>$156–$183</td><td>$80</td><td>$236–$263</td></tr>
+    <tr><td>Las Vegas</td><td>Clark</td><td>$120–$173</td><td>$86</td><td>$206–$259</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Nevada locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"New Mexico","new-mexico","NM","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Albuquerque</td><td>Bernalillo</td><td>$154–$208</td><td>$80</td><td>$234–$288</td></tr>
+    <tr><td>Carlsbad</td><td>Eddy</td><td>$164</td><td>$74</td><td>$238</td></tr>
+    <tr><td>Santa Fe</td><td>Santa Fe</td><td>$129–$175</td><td>$80</td><td>$209–$255</td></tr>
+    <tr><td>Taos</td><td>Taos</td><td>$128</td><td>$74</td><td>$202</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other New Mexico locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Oregon","oregon","OR","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Beaverton</td><td>Washington</td><td>$138</td><td>$80</td><td>$218</td></tr>
+    <tr><td>Bend</td><td>Deschutes</td><td>$123–$195</td><td>$86</td><td>$209–$281</td></tr>
+    <tr><td>Clackamas</td><td>Clackamas</td><td>$137</td><td>$80</td><td>$217</td></tr>
+    <tr><td>Eugene / Florence</td><td>Lane</td><td>$146–$202</td><td>$80</td><td>$226–$282</td></tr>
+    <tr><td>Lincoln City</td><td>Lincoln</td><td>$127–$178</td><td>$92</td><td>$219–$270</td></tr>
+    <tr><td>Portland</td><td>Multnomah</td><td>$161</td><td>$86</td><td>$247</td></tr>
+    <tr><td>Seaside</td><td>Clatsop</td><td>$145–$237</td><td>$86</td><td>$231–$323</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Oregon locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Utah","utah","UT","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Moab</td><td>Grand</td><td>$113–$223</td><td>$86</td><td>$199–$309</td></tr>
+    <tr><td>Park City</td><td>Summit</td><td>$227–$499</td><td>$92</td><td>$319–$591</td></tr>
+    <tr><td>Provo</td><td>Utah</td><td>$130</td><td>$74</td><td>$204</td></tr>
+    <tr><td>Salt Lake City</td><td>Salt Lake / Tooele</td><td>$152</td><td>$80</td><td>$232</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Utah locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Washington","washington","WA","West","true","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Everett / Lynnwood</td><td>Snohomish</td><td>$120–$147</td><td>$86</td><td>$206–$233</td></tr>
+    <tr><td>Ocean Shores</td><td>Grays Harbor</td><td>$136–$155</td><td>$86</td><td>$222–$241</td></tr>
+    <tr><td>Olympia / Tumwater</td><td>Thurston</td><td>$149–$176</td><td>$80</td><td>$229–$256</td></tr>
+    <tr><td>Port Angeles / Port Townsend</td><td>Clallam / Jefferson</td><td>$131–$252</td><td>$92</td><td>$223–$344</td></tr>
+    <tr><td>Richland / Pasco</td><td>Benton / Franklin</td><td>$136</td><td>$86</td><td>$222</td></tr>
+    <tr><td>Seattle</td><td>King</td><td>$188–$255</td><td>$92</td><td>$280–$347</td></tr>
+    <tr><td>Spokane</td><td>Spokane</td><td>$126</td><td>$86</td><td>$212</td></tr>
+    <tr><td>Tacoma</td><td>Pierce</td><td>$143</td><td>$86</td><td>$229</td></tr>
+    <tr><td>Vancouver</td><td>Clark / Cowlitz / Skamania</td><td>$161</td><td>$86</td><td>$247</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Washington locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"
+"Wyoming","wyoming","WY","West","false","<table class=""perdiem_table"">
+  <thead><tr><th>City</th><th>County</th><th>Lodging (per night)</th><th>M&amp;IE (per day)</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>Cody</td><td>Park</td><td>$128–$213</td><td>$74</td><td>$202–$287</td></tr>
+    <tr><td>Jackson / Pinedale</td><td>Teton / Sublette</td><td>$215–$441</td><td>$92</td><td>$307–$533</td></tr>
+  </tbody>
+</table>
+<p class=""perdiem_table-note"">All other Wyoming locations use the standard rate: $113 lodging and $68 M&amp;IE per day. Source: U.S. General Services Administration, FY2027. Data updated 27 Sep 2026.</p>
+"

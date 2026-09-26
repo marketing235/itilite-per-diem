@@ -77,11 +77,14 @@ function csvField(value) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
-// cms/states.csv: Name,Slug,Abbreviation,Region,Featured — every field quoted.
-function buildStatesCsv() {
-  const header = ['Name', 'Slug', 'Abbreviation', 'Region', 'Featured'].map(csvField).join(',');
+// cms/states.csv: Name,Slug,Abbreviation,Region,Featured,County table HTML — every field
+// quoted, embedded quotes doubled (standard CSV), line breaks inside the HTML kept as-is.
+function buildStatesCsv(tableHtmlByState) {
+  const header = ['Name', 'Slug', 'Abbreviation', 'Region', 'Featured', 'County table HTML'].map(csvField).join(',');
   const rows = states.map((s) =>
-    [s.displayName, s.slug, s.abbreviation, s.region, s.featured ? 'true' : 'false'].map(csvField).join(',')
+    [s.displayName, s.slug, s.abbreviation, s.region, s.featured ? 'true' : 'false', tableHtmlByState.get(s.abbreviation)]
+      .map(csvField)
+      .join(',')
   );
   return [header, ...rows].join('\n') + '\n';
 }
@@ -97,6 +100,13 @@ function main() {
     console.error('data/meta.json has no fiscalYears entries.');
     process.exit(1);
   }
+
+  const CSV_FY = 2027;
+  if (!fiscalYears.includes(CSV_FY)) {
+    console.error(`data/meta.json has no FY${CSV_FY} entry — cms/states.csv needs it for the County table HTML column.`);
+    process.exit(1);
+  }
+  const csvTableHtml = new Map();
 
   for (const fy of fiscalYears) {
     const fyDir = path.join('data', String(fy));
@@ -115,13 +125,14 @@ function main() {
       const stateData = JSON.parse(readFileSync(file, 'utf8'));
       const html = buildTableHtml(stateData, state, meta.pulledAt);
       writeFileSync(path.join(outDir, `${state.abbreviation}.html`), html);
+      if (fy === CSV_FY) csvTableHtml.set(state.abbreviation, html);
     }
   }
 
   mkdirSync('cms', { recursive: true });
-  writeFileSync(path.join('cms', 'states.csv'), buildStatesCsv());
+  writeFileSync(path.join('cms', 'states.csv'), buildStatesCsv(csvTableHtml));
 
-  console.log(`Wrote cms/states.csv and cms/tables/{fy}/{ST}.html for fiscal year(s): ${fiscalYears.join(', ')}.`);
+  console.log(`Wrote cms/states.csv (with FY${CSV_FY} table HTML) and cms/tables/{fy}/{ST}.html for fiscal year(s): ${fiscalYears.join(', ')}.`);
 }
 
 main();
