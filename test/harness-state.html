@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Per diem harness: California</title>
+<!-- Local test page for npm run serve: a state page. scripts/serve.js swaps in the calculator
+     markup with data-state="CA" on its root, then the FY2027 California county table below it
+     (the state pages carry that table, which the load-error message refers to). -->
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 16px; }
+  .perdiem-calc_fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .perdiem-calc_field { display: flex; flex-direction: column; gap: 4px; }
+  .perdiem-calc_input, .perdiem-calc_select { font: inherit; padding: 6px; }
+  .perdiem-calc_message { min-height: 1.5em; }
+  .perdiem-calc_message.is-error { color: #b00020; font-weight: 600; }
+  .perdiem-calc_stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .perdiem-calc_stat dd { margin: 0; font-size: 1.4em; font-weight: 600; }
+  .perdiem-calc_export-icon { vertical-align: middle; }
+  :focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+  .perdiem_table { border-collapse: collapse; font-size: 14px; }
+  .perdiem_table th, .perdiem_table td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
+  .harness { border-top: 1px solid #ccc; margin-top: 32px; font-size: 14px; }
+  .harness pre { background: #f4f4f4; padding: 8px; min-height: 3em; white-space: pre-wrap; }
+</style>
+<script>
+  // Stand-in for the page's GA4 gtag: records events on this page instead of sending them.
+  window.gtag = function () {
+    var line = new Date().toTimeString().slice(0, 8) + '  ' + JSON.stringify(Array.prototype.slice.call(arguments));
+    console.log('[gtag]', line);
+    var log = document.getElementById('gtag-log');
+    if (log) log.textContent += line + '\n';
+  };
+</script>
+</head>
+<body>
+<!--#include file="fixtures/03-calculator.html" data-state="CA" -->
+<section>
+  <h2>California per diem rates by county (FY2027)</h2>
+  <!--#include file="../cms/tables/2027/CA.html" -->
+</section>
+<section class="harness">
+  <h2>gtag events (local stub)</h2>
+  <pre id="gtag-log"></pre>
+</section>
+<script src="/dist/perdiem.js" defer></script>
+</body>
+</html>

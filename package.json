@@ -9,6 +9,8 @@
   "scripts": {
     "pull": "node scripts/pull-gsa.js",
     "build": "node scripts/build-tables.js",
-    "test": "node --test"
+    "build:js": "node scripts/build-js.js",
+    "serve": "node scripts/serve.js",
+    "test": "node --test \"test/**/*.test.js\""
   }
 }

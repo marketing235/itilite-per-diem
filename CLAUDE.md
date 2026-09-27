@@ -19,6 +19,8 @@ The pages themselves are built in Webflow by Ashique. **This repo only produces 
 
 Files are served to the site through jsDelivr: `https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@<tag>/...`
 Never assume a file is reachable until it is committed and tagged.
+**Tags are exact semver (`v1.0.0`, `v1.0.1`, …) and the live script URL pins one exact tag** —
+never `@v1` (jsDelivr may treat it as a version range) and never `@main`. The first release is `v1.0.0`.
 
 ## Why the data is pulled once, not called live
 
@@ -36,7 +38,7 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 | 3 | Dates: two native `<input type="date">` fields (departure, return). No date-picker library |
 | 4 | Export: CSV generated in the browser with a Blob download, button labelled "Export to Excel". No SheetJS |
 | 5 | Export is ungated (no HubSpot form) |
-| 6 | Calculation rules — see "Calculator maths" below |
+| 6 | Calculation rules — see "Calculator maths" below and `docs/phase-4-calculator.md` |
 | 7 | State-page county table shows **special-rate GSA locations only** plus one "all other locations: standard rate" line |
 | 8 | Hosting: this repo + jsDelivr. GitHub account `marketing235` (personal, known caveat) |
 | 9 | Both FY2026 and FY2027 data shipped from day one; the calculator picks the fiscal year per travel day |
@@ -48,7 +50,7 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target under 15 KB minified for the calculator.
+  Core Web Vitals; target under 15 KB as served (minified) for the calculator (`perdiem.min.js`).
 - **Fail loud.** Any script that cannot complete must exit non-zero with a clear message. Never write
   partial data.
 - **Propose before building.** For anything not specified here, describe the approach and ask before
@@ -58,7 +60,7 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 
 ```
 CLAUDE.md
-package.json                  "type": "module", scripts: pull, build, test
+package.json                  "type": "module", scripts: pull, build, build:js, test
 .gitignore                    .env, node_modules, fixtures/raw-*.json, dist/*.map
 .env.example                  GSA_API_KEY=
 scripts/pull-gsa.js           Phase 1 — fetch GSA, write data/, cms/
@@ -68,9 +70,17 @@ data/meta.json
 data/{fy}/{ST}.json           e.g. data/2027/CA.json
 cms/states.csv                Webflow CMS import file
 cms/tables/{fy}/{ST}.html     county-table HTML snippet per state (Webflow field type decided later)
-src/perdiem.js                Phase 4 — calculator source
+docs/phase-4-calculator.md    Phase 4 — calculator spec (locked)
+src/calc-core.js              Phase 4 — pure calculation functions, no DOM
+src/perdiem.js                Phase 4 — DOM wiring: hooks, data loading, render, export, analytics
+scripts/build-js.js           Phase 4 — zero-dependency build: wraps calc-core + perdiem into one IIFE
+test/calc-core.test.js        Phase 4 — golden tests against the committed data/ files
+test/fixtures/03-calculator.html  calculator markup as it appears in Webflow (hook contract)
+scripts/serve.js              Phase 4 — local static server (node:http) with an HTML include swap
+test/harness.html             Phase 4 — local main-page harness (npm run serve)
+test/harness-state.html       Phase 4 — local state-page harness, data-state="CA"
 src/us-map.svg                Phase 5 — map source
-dist/perdiem.min.js           built output, served by jsDelivr
+dist/perdiem.js               built output, committed; the page requests perdiem.min.js, which jsDelivr auto-minifies
 dist/us-map.svg
 fixtures/raw-conus-lodging-{fy}.json   one raw GSA response per FY kept locally for reference (gitignored)
 .github/workflows/pull.yml    Phase 8 — annual run, 20 August
@@ -221,19 +231,21 @@ Utah UT utah · Washington WA washington (featured) · Wyoming WY wyoming
 
 Display name for DC on pages: "Washington D.C.". GSA state code for it: `DC` *(verify)*.
 
-## Calculator maths (Phase 4, recorded here so the data supports it)
+## Calculator maths (Phase 4)
 
-1. **Days** = inclusive calendar days from departure to return (same day = 1).
-2. **Nights** = days − 1. Lodging is charged per night at that night's calendar-month rate. A one-day trip has no lodging.
-3. **M&IE** at the full daily rate for each day, except the first and last day at 75%. A one-day trip is a single 75% day.
-4. **Incidentals** = $5 per day (GSA's fixed incidental portion). **Meals** = M&IE − $5, with the 75% rule applied to the whole M&IE before splitting.
-5. **Fiscal year per day**: 1 Oct–30 Sep. A trip crossing 30 Sep uses each day's own fiscal year. If a day falls outside the fiscal years present in `meta.json`, show a clear "rates not yet published" message rather than a wrong number.
-6. Rates are chosen by **GSA location** (`data/{fy}/{ST}.json`'s `locations` entries, keyed by `did`).
-   The dropdown lists the state's `locations` (labelled by their raw `city` text, sorted A–Z) plus
-   one "All other {State} locations — standard rate" option that resolves to `standard`. There is no
-   separate city select. **DC exception:** `standard` is `null`, so DC's dropdown has no "All other
-   locations" option — its one location is the only choice.
-7. All maths in whole dollars as GSA publishes; round totals to the nearest dollar only at the end.
+The full, locked spec is **`docs/phase-4-calculator.md`** (hook contract, calculation rules, behaviour,
+export, analytics, golden tests). It wins over anything here. In short:
+
+1. **Days** = inclusive calendar days; **nights** = days − 1, each night at its calendar month's lodging.
+2. **Fiscal year per date** (1 Oct–30 Sep); each day and night uses its own FY's data file.
+3. **M&IE** full rate per day, 75% on the first and last day (a same-day trip is one 75% day).
+   **Incidentals** $5 per full day, $3.75 on first/last day; **meals** = M&IE − incidentals.
+4. **Location** by `did` or `std`; DC has no `std`; a `did` missing in one FY falls back to that FY's
+   `standard`.
+5. Dates are parsed manually and computed in UTC — never local-time `Date` methods.
+6. Dates outside the fiscal years in `meta.json` show an error, never a wrong number.
+7. **Money keeps cents** (75% days give .25/.50/.75). Sum exact values, never round intermediate
+   steps; display cents only when the amount isn't a whole dollar (`$788`, `$55.50`).
 
 ## Safety rules for the pull script
 
@@ -260,8 +272,8 @@ Display name for DC on pages: "Washington D.C.". GSA state code for it: `DC` *(v
 ## Annual refresh (Phase 8, for context)
 
 A GitHub Action on 20 August pulls the coming fiscal year, validates with the rules above, commits
-to a branch and opens a pull request. Nothing is merged automatically. After merge, a new tag is
-cut and the Webflow page's script URL is updated to it. Rates go live on 1 October regardless of
+to a branch and opens a pull request. Nothing is merged automatically. After merge, a new exact
+semver tag is cut (e.g. `v1.1.0`) and the Webflow page's script URL is updated to pin it. Rates go live on 1 October regardless of
 when GSA publishes, because the calculator selects by travel date.
 
 ## Out of scope for this repo
