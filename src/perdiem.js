@@ -10,7 +10,7 @@ import {
 
 // Must be read while the script first executes; it is null inside later callbacks.
 const SCRIPT = document.currentScript;
-const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.0.0/';
+const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.0.1/';
 const HOOKS = ['depart', 'return', 'state', 'location', 'message', 'export', 'days', 'total',
   'lodging', 'meals', 'incidentals'];
 const LOAD_ERROR = 'Rates couldn’t load. Please try again.';
@@ -81,6 +81,8 @@ function init(root) {
     e.depart.addEventListener(type, onDates);
     e.return.addEventListener(type, onDates);
   });
+  openPickerOnClick(e.depart);
+  openPickerOnClick(e.return);
   e.state.addEventListener('change', () => {
     c.selected = '';
     c.menuKey = c.wantMenu = null;
@@ -105,6 +107,22 @@ function init(root) {
   } else {
     activate();
   }
+}
+
+// A mouse or pen click anywhere in a date field opens the calendar, not only its icon. The pointer
+// type comes from the pointerdown before the click: keyboard use (Tab, typing) has none, so it is
+// untouched, and touch is skipped because phones open their own picker.
+function openPickerOnClick(input) {
+  let pointer = '';
+  input.addEventListener('pointerdown', (ev) => { pointer = ev.pointerType; });
+  input.addEventListener('click', () => {
+    const type = pointer;
+    pointer = '';
+    if ((type !== 'mouse' && type !== 'pen') || input.disabled || typeof input.showPicker !== 'function') return;
+    try {
+      input.showPicker();
+    } catch (err) { /* some browsers refuse; the field and its icon still work */ }
+  });
 }
 
 function stateName(c) {

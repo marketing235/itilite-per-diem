@@ -113,6 +113,9 @@ time zones.
   "The full rate table is below."; retry the fetch next time the user changes a field.
 - Date inputs: set `min` / `max` from `meta.json` (earliest `effective`, latest `expires`).
   When the departure date is set and the return date is empty or earlier, set return `min` to it.
+- Date inputs: a mouse or pen click anywhere in the field opens the browser's calendar
+  (`input.showPicker()`, only if it exists, errors ignored). Not for touch (phones open their own
+  picker) or a disabled field; Tab focus and typing a date are unchanged.
 
 ## Export (CSV, opens in Excel)
 
