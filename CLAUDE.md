@@ -50,7 +50,9 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target under 15 KB as served (minified) for the calculator (`perdiem.min.js`).
+  Core Web Vitals; target for the calculator (`perdiem.min.js`) is ≤ 20 KB minified and ≤ 8 KB gzipped,
+  measured on the served jsDelivr file after tagging (`npm run build:js` prints upper-bound estimates;
+  see `docs/v1.1.0-multi-city.md` §14).
 - **Fail loud.** Any script that cannot complete must exit non-zero with a clear message. Never write
   partial data.
 - **Propose before building.** For anything not specified here, describe the approach and ask before
@@ -76,9 +78,12 @@ src/perdiem.js                Phase 4 — DOM wiring: hooks, data loading, rende
 scripts/build-js.js           Phase 4 — zero-dependency build: wraps calc-core + perdiem into one IIFE
 test/calc-core.test.js        Phase 4 — golden tests against the committed data/ files
 test/fixtures/03-calculator.html  calculator markup as it appears in Webflow (hook contract)
+test/fixtures/03-calculator-v1.1.html  the same plus the v1.1 multi-city hooks (v1.1.0 spec §7)
 scripts/serve.js              Phase 4 — local static server (node:http) with an HTML include swap
 test/harness.html             Phase 4 — local main-page harness (npm run serve)
 test/harness-state.html       Phase 4 — local state-page harness, data-state="CA"
+test/harness-v1.1.html        v1.1.0 — main-page harness on the v1.1 markup
+test/harness-v1.1-state.html  v1.1.0 — state-page harness on the v1.1 markup, data-state="NY"
 src/us-map.svg                Phase 5 — map source
 dist/perdiem.js               built output, committed; the page requests perdiem.min.js, which jsDelivr auto-minifies
 dist/us-map.svg

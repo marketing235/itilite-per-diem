@@ -416,3 +416,69 @@ export function tripSummaryText(result, departIso, returnIso) {
   }
   return summaryText(result, list, departIso, returnIso, note);
 }
+
+// GA4 params for perdiem_calculate and perdiem_export (v1.1 spec §9): codes and counts only, never
+// dates, place names or anything typed.
+export function analyticsParams(result) {
+  return { state: result.destinations[0].state, location_type: locationType(result.destinations),
+    days: result.days, destinations: result.destinations.length, trip_type: result.tripType };
+}
+
+// Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
+function csvCell(value) {
+  let s = String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = '\'' + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+// Plain numbers for Excel in any locale: 279, 65.25 (never $ or thousands separators).
+function csvNumber(n) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+// A destination as the export names it: "New York City, New York" or "Standard rate, New York".
+function csvPlace(d) {
+  return (d.location === 'std' ? 'Standard rate' : d.place) + ', ' + d.stateName;
+}
+
+// CSV export of a calculateTrip result (phase-4 spec "Export", v1.1 spec §8). todayIso is the
+// Generated date. Each day row names the destination it belongs to; an overnight trip with 2+
+// destinations gets a subtotal row after each destination's last day. A same-day trip to several
+// places adds the rate-used line instead (it has one day row, so no subtotals).
+// Returns { filename, text }: text starts with the UTF-8 BOM and ends every line with CRLF.
+export function buildCsv(result, departIso, returnIso, todayIso) {
+  const n = csvNumber;
+  const dests = result.destinations;
+  const multi = dests.length > 1;
+  const today = parseISODate(todayIso);
+  const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + dests.map(function (d) {
+    return csvPlace(d) + ' (' + formatDateRange(parseISODate(d.startIso), parseISODate(d.endIso)) + ')';
+  }).join('; ') : csvPlace(dests[0])]];
+  if (multi && result.rateUsed !== null) {
+    const used = dests[result.rateUsed];
+    lines.push(['Same-day trip, away more than 12 hours. Rate used: ' +
+      (used.location === 'std' ? used.stateName + ' standard rate' : used.place) + ' (the highest of your stops).']);
+  }
+  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
+    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
+  ['Source: U.S. General Services Administration per diem rates'],
+  ['Generated ' + formatDateRange(today, today)],
+  [],
+  ['Date', 'Fiscal year', 'Location', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Day total (USD)']);
+  const subtotals = multi && result.tripType === 'overnight';
+  result.rows.forEach(function (row, i) {
+    lines.push([row.date, 'FY' + row.fiscalYear, csvPlace(dests[row.destination]),
+      i < result.nights ? n(row.lodging) : '', n(row.meals), n(row.incidentals), n(row.total)]);
+    const next = result.rows[i + 1];
+    if (subtotals && (!next || next.destination !== row.destination)) {
+      const d = dests[row.destination];
+      lines.push(['Subtotal: ' + d.place, '', '', n(d.lodging), n(d.meals), n(d.incidentals), n(d.total)]);
+    }
+  });
+  lines.push(['Total', '', '', n(result.lodging), n(result.meals), n(result.incidentals), n(result.total)]);
+  return {
+    filename: 'per-diem-' + (multi ? 'multi-city' : dests[0].state.toLowerCase()) + '-' + departIso + '-to-' +
+      returnIso + '.csv',
+    text: '﻿' + lines.map(function (cells) { return cells.map(csvCell).join(','); }).join('\r\n') + '\r\n'
+  };
+}

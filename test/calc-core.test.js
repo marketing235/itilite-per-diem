@@ -1,5 +1,5 @@
 // Golden tests from docs/phase-4-calculator.md (1–9) and docs/v1.1.0-multi-city.md (10–23), run
-// against the committed data/ files.
+// against the committed data/ files, plus the CSV export and GA4 params helpers (v1.1 §8, §9).
 // Run in several time zones: npm test, then TZ=America/Los_Angeles and TZ=Asia/Kolkata.
 
 import { test } from 'node:test';
@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   calculate, validateDates, buildLocationOptions, parseISODate, dayParts, fiscalYearOf, toISODate,
-  formatMoney, summaryText, MESSAGES, calculateTrip, validateTrip, tripSummaryText, locationType
+  formatMoney, summaryText, MESSAGES, calculateTrip, validateTrip, tripSummaryText, locationType,
+  buildCsv, analyticsParams
 } from '../src/calc-core.js';
 import { states } from '../scripts/lib/states.js';
 
@@ -392,4 +393,125 @@ test('v1.1 needed lists only the state files the trip reads', () => {
     [[2026, 'PA'], [2027, 'PA']]);
   assert.deepEqual(needed('2026-10-12', '2026-10-12', [['NY', '258'], ['PA', '318']]),
     [[2027, 'NY'], [2027, 'PA']]);
+});
+
+test('v1.1 rateGap: a did only in FY2026, in a state with no standard rate, across 1 Oct', () => {
+  // Made-up state files: XX has no standard rate (like DC) and did 9 is gone in FY2027.
+  const loc = (did, city) => ({ did, county: city + ' County', city, mie: 80,
+    lodging: [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150] });
+  const xx = {
+    2026: { state: 'XX', fiscalYear: 2026, standard: null, locations: [loc('9', 'Testville')] },
+    2027: { state: 'XX', fiscalYear: 2027, standard: null, locations: [loc('10', 'Othertown')] }
+  };
+  const r = calculateTrip({ departIso: '2026-09-29', returnIso: '2026-10-02', meta,
+    files: { 2026: { XX: xx[2026] }, 2027: { XX: xx[2027] } },
+    destinations: [{ state: 'XX', location: '9', arrive: null, stateName: 'Testland' }] });
+  assert.equal(r.ok, false);
+  assert.equal(r.error, 'Rates for Testville aren’t available for all of your dates.');
+  assert.equal(r.error, MESSAGES.rateGap('Testville'));
+  assert.equal(r.incomplete, false);
+  assert.equal(r.total, undefined);
+  // The v1.0 wrapper (and perdiem.js with one destination) keeps the v1.0.1 wording.
+  const one = calculate({ departIso: '2026-09-29', returnIso: '2026-10-02', meta, files: xx, location: '9' });
+  assert.equal(one.error, MESSAGES.locationGap);
+});
+
+test('v1.1 validateTrip throws for 0 and for 6 destinations', () => {
+  const trip = (n) => ({ departIso: '2026-10-12', returnIso: '2026-10-16',
+    destinations: Array.from({ length: n }, () => ({ state: 'NY', location: '266', arrive: null })) });
+  assert.throws(() => validateTrip(trip(0), meta), /1 to 5 destinations required/);
+  assert.throws(() => validateTrip(trip(6), meta), /1 to 5 destinations required/);
+  assert.doesNotThrow(() => validateTrip(trip(1), meta));
+  assert.doesNotThrow(() => validateTrip(trip(5), meta));
+});
+
+// ---- v1.1.0 step 2: CSV export and GA4 params (docs/v1.1.0-multi-city.md §8, §9) ----
+
+const CSV_HEADER = '"Date","Fiscal year","Location","Lodging (USD)","Meals (USD)","Incidentals (USD)",' +
+  '"Day total (USD)"';
+
+// The file's lines, after checking the UTF-8 BOM and the CRLF after the last line.
+function csvLines(csv) {
+  assert.ok(csv.text.startsWith('﻿'), 'starts with the UTF-8 BOM');
+  assert.ok(csv.text.endsWith('\r\n'), 'ends with CRLF');
+  return csv.text.slice(1, -2).split('\r\n');
+}
+
+test('CSV for test 10 (NYC → Pittsburgh): Location column, subtotals, total, filename', () => {
+  const r = runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-14']]);
+  const csv = buildCsv(r, '2026-10-12', '2026-10-16', '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-multi-city-2026-10-12-to-2026-10-16.csv');
+  assert.deepEqual(csvLines(csv), [
+    '"ITILITE per diem estimate"',
+    '"Trip: New York City, New York (12–14 Oct 2026); Pittsburgh, Pennsylvania (14–16 Oct 2026)"',
+    '"Travel dates: 12–16 Oct 2026 (5 days)"',
+    '"Source: U.S. General Services Administration per diem rates"',
+    '"Generated 16 Oct 2026"',
+    '',
+    CSV_HEADER,
+    '"2026-10-12","FY2027","New York City, New York","358","65.25","3.75","427"',
+    '"2026-10-13","FY2027","New York City, New York","358","87","5","450"',
+    '"Subtotal: New York City","","","716","152.25","8.75","877"',
+    '"2026-10-14","FY2027","Pittsburgh, Pennsylvania","144","75","5","224"',
+    '"2026-10-15","FY2027","Pittsburgh, Pennsylvania","144","75","5","224"',
+    '"2026-10-16","FY2027","Pittsburgh, Pennsylvania","","56.25","3.75","60"',
+    '"Subtotal: Pittsburgh","","","288","206.25","13.75","508"',
+    '"Total","","","1004","358.50","22.50","1385"'
+  ]);
+});
+
+test('CSV for golden test 1 = the v1.0.1 export plus the Location column', () => {
+  // The v1.0.1 export of golden test 1, cell by cell (buildCsv in src/perdiem.js at v1.0.1).
+  const v101 = [
+    ['ITILITE per diem estimate'],
+    ['San Francisco, California'],
+    ['Travel dates: 1–3 Oct 2026 (3 days)'],
+    ['Source: U.S. General Services Administration per diem rates'],
+    ['Generated 16 Oct 2026'],
+    [],
+    ['Date', 'Fiscal year', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Day total (USD)'],
+    ['2026-10-01', 'FY2027', '279', '65.25', '3.75', '348'],
+    ['2026-10-02', 'FY2027', '279', '87', '5', '371'],
+    ['2026-10-03', 'FY2027', '', '65.25', '3.75', '69'],
+    ['Total', '', '558', '217.50', '12.50', '788']
+  ];
+  // Location becomes the third column: its title, the place on each day, empty on the Total row.
+  const location = (cells) => (cells[0] === 'Date' ? 'Location' : cells[0] === 'Total' ? '' : 'San Francisco, California');
+  const expected = v101.map((cells) => (cells.length < 2 ? cells
+    : cells.slice(0, 2).concat([location(cells)], cells.slice(2))));
+  const quote = (cells) => cells.map((s) => '"' + s + '"').join(',');
+  const r = runTrip('2026-10-01', '2026-10-03', [['CA', '35']]);
+  const csv = buildCsv(r, '2026-10-01', '2026-10-03', '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-ca-2026-10-01-to-2026-10-03.csv');
+  assert.deepEqual(csvLines(csv), expected.map(quote));
+});
+
+test('CSV for test 16 (same-day, two stops): rate-used line, no subtotals', () => {
+  const r = runTrip('2026-10-12', '2026-10-12', [['NY', '258'], ['NY', '266']], true);
+  const csv = buildCsv(r, '2026-10-12', '2026-10-12', '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-multi-city-2026-10-12-to-2026-10-12.csv');
+  assert.deepEqual(csvLines(csv), [
+    '"ITILITE per diem estimate"',
+    '"Trip: Albany, New York (12 Oct 2026); New York City, New York (12 Oct 2026)"',
+    '"Same-day trip, away more than 12 hours. Rate used: New York City (the highest of your stops)."',
+    '"Travel dates: 12 Oct 2026 (1 day)"',
+    '"Source: U.S. General Services Administration per diem rates"',
+    '"Generated 16 Oct 2026"',
+    '',
+    CSV_HEADER,
+    '"2026-10-12","FY2027","New York City, New York","","65.25","3.75","69"',
+    '"Total","","","0","65.25","3.75","69"'
+  ]);
+});
+
+test('GA4 params for tests 10, 15, 16 and 17', () => {
+  const params = (d, r, dests, over12) => analyticsParams(runTrip(d, r, dests, over12));
+  assert.deepEqual(params('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-14']]),
+    { state: 'NY', location_type: 'nsa', days: 5, destinations: 2, trip_type: 'overnight' });
+  assert.deepEqual(params('2026-10-19', '2026-10-22', [['WI', 'std'], ['WI', '397', '2026-10-21']]),
+    { state: 'WI', location_type: 'mixed', days: 4, destinations: 2, trip_type: 'overnight' });
+  assert.deepEqual(params('2026-10-12', '2026-10-12', [['NY', '258'], ['NY', '266']], true),
+    { state: 'NY', location_type: 'nsa', days: 1, destinations: 2, trip_type: 'day' });
+  assert.deepEqual(params('2026-10-12', '2026-10-12', [['NY', '266']], false),
+    { state: 'NY', location_type: 'nsa', days: 1, destinations: 1, trip_type: 'day_short' });
 });

@@ -4,11 +4,14 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { Script } from 'node:vm';
+import { gzipSync } from 'node:zlib';
 
 const root = new URL('../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8').replace(/\r\n/g, '\n');
 const OUT = 'dist/perdiem.js';
-const BUDGET = 15 * 1024;
+// Size targets for the served perdiem.min.js (docs/v1.1.0-multi-city.md §14).
+const BUDGET = 20 * 1024;
+const GZIP_BUDGET = 8 * 1024;
 
 function fail(msg) {
   console.error('build-js: ' + msg);
@@ -45,7 +48,10 @@ if (newer) fail('syntax newer than ES2019 near: ' + JSON.stringify(out.slice(new
 
 // Served-size estimate. jsDelivr minifies perdiem.min.js on request; we have no minifier (zero
 // dependencies), so strip comments and whitespace only — no renaming — which gives an upper bound
-// on the real minified size. Only for the report: the stripped text is never written.
+// on the real minified size (v1.0.1: 14.4 KB estimated, 11.1 KB real). The gzip figure is that
+// text gzipped, also above the real one, by less: gzip already shrinks repeated long names.
+// v1.1.0 step 2: measured 18.5 KB minified / 7.1 KB gzipped (terser 5, 16 Oct 2026); estimate 24.2 KB / 8.3 KB.
+// Only for the report: the stripped text is never written.
 function stripForSize(src) {
   const ident = /[A-Za-z0-9_$\u0080-￿]/;
   const regexAfter = /[(,=:[!&|?{};+\-*%<>~^]$|\b(?:return|typeof|case)$/;
@@ -101,6 +107,14 @@ writeFileSync(new URL(OUT, root), out);
 const kb = (n) => (n / 1024).toFixed(1) + ' KB';
 const bytes = Buffer.byteLength(out);
 const served = Buffer.byteLength(stripped);
+const gzipped = gzipSync(stripped).length;
 console.log(`${OUT}: ${bytes} bytes (${kb(bytes)}) as built`);
 console.log(`served (minified) estimate: ≤ ${served} bytes (${kb(served)}), budget ${kb(BUDGET)}`);
-if (served > BUDGET) console.warn('build-js: WARNING — estimated served size is over the 15 KB target');
+console.log(`served (gzipped) estimate: ≤ ${gzipped} bytes (${kb(gzipped)}), budget ${kb(GZIP_BUDGET)}`);
+const MEASURE = 'measure the real size before tagging: npx terser dist/perdiem.js -c -m, then gzip it';
+if (served > BUDGET) {
+  console.warn(`build-js: WARNING — the minified upper-bound estimate is over the ${kb(BUDGET)} target; ${MEASURE}`);
+}
+if (gzipped > GZIP_BUDGET) {
+  console.warn(`build-js: WARNING — the gzipped upper-bound estimate is over the ${kb(GZIP_BUDGET)} target; ${MEASURE}`);
+}

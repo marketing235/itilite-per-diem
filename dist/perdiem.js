@@ -3,7 +3,8 @@
 'use strict';
 
 // ---- src/calc-core.js ----
-// Pure per diem calculation functions: no DOM, no fetch. Spec: docs/phase-4-calculator.md.
+// Pure per diem calculation functions: no DOM, no fetch. Spec: docs/phase-4-calculator.md, extended
+// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules).
 // Written as an ES module so node --test can import it; scripts/build-js.js strips the `export`
 // keywords and inlines this file into the dist/perdiem.js IIFE. Keep syntax at ES2019 or older.
 //
@@ -16,10 +17,29 @@ const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MAX_DAYS = 365;
 
+const MAX_DESTINATIONS = 5;
+
+// k is the 1-based destination number; place is a placeName().
 const MESSAGES = {
   returnBeforeDepart: 'Your return date is before your departure date.',
   tooLong: 'Trips can be up to ' + MAX_DAYS + ' days.',
-  locationGap: 'Rates for this location aren’t available for all of your dates.'
+  locationGap: 'Rates for this location aren’t available for all of your dates.',
+  chooseState: 'Choose a state',
+  chooseLocation: 'Choose a city or county',
+  dayShort: 'Day trips of 12 hours or less don’t qualify for per diem under GSA rules.',
+  destState: function (k) { return 'Choose a state for destination ' + k + '.'; },
+  destLocation: function (k) { return 'Choose a city or county for destination ' + k + '.'; },
+  destArrive: function (k) { return 'Choose the date you arrive at destination ' + k + '.'; },
+  destOutside: function (k) {
+    return 'Destination ' + k + '’s date must be between your departure and return dates.';
+  },
+  destOrder: function (k) {
+    return 'Destination ' + k + ' starts before destination ' + (k - 1) + '. Check the dates.';
+  },
+  noNight: function (place) {
+    return 'No night in ' + place + '? Remove it: per diem follows where you sleep each night.';
+  },
+  rateGap: function (place) { return 'Rates for ' + place + ' aren’t available for all of your dates.'; }
 };
 
 // 'YYYY-MM-DD' → day number, or null if malformed or not a real date.
@@ -110,6 +130,70 @@ function validateDates(departIso, returnIso, meta) {
   return { ok: true, depart: depart, ret: ret, days: days, fiscalYears: fiscalYears };
 }
 
+// "Choose …" prompts are incomplete input, shown without the error style; the rest are errors.
+function prompt(text) {
+  return { ok: false, error: text, incomplete: true };
+}
+
+function fail(text) {
+  return { ok: false, error: text, incomplete: false };
+}
+
+// trip: { departIso, returnIso, destinations: [{ state, location, arrive }] }, 1 to 5 in travel order.
+// Runs every check that needs no data file, in form order (v1.1 spec §5). The last check, a
+// destination with no night, names the place from its data file, so calculateTrip makes it.
+// Returns { ok: false, error, incomplete } or { ok: true, depart, ret, days, fiscalYears, sameDay,
+// starts[], nights[], needed }: starts[k] = destination k's first day, nights[k] = its nights,
+// needed = the [fy, ST] state files calculateTrip will read.
+function validateTrip(trip, meta) {
+  const dests = trip.destinations;
+  if (!dests || dests.length < 1 || dests.length > MAX_DESTINATIONS) {
+    throw new Error('validateTrip: 1 to ' + MAX_DESTINATIONS + ' destinations required');
+  }
+  const v = validateDates(trip.departIso, trip.returnIso, meta);
+  if (!v.ok) return fail(v.error);
+  const sameDay = v.days === 1;
+
+  // Same-day trips ignore Arrive on: every destination starts on the departure date.
+  const starts = [];
+  for (let i = 0; i < dests.length; i++) {
+    const k = i + 1;
+    let start = v.depart;
+    if (i > 0 && !sameDay) {
+      start = parseISODate(dests[i].arrive);
+      if (start === null) return prompt(MESSAGES.destArrive(k));
+      if (start < v.depart || start > v.ret) return fail(MESSAGES.destOutside(k));
+      if (start < starts[i - 1]) return fail(MESSAGES.destOrder(k));
+    }
+    starts.push(start);
+    if (!dests[i].state) return prompt(i === 0 ? MESSAGES.chooseState : MESSAGES.destState(k));
+    if (!dests[i].location) return prompt(i === 0 ? MESSAGES.chooseLocation : MESSAGES.destLocation(k));
+  }
+
+  const nights = [];
+  const needed = [];
+  const seen = {};
+  starts.forEach(function (start, i) {
+    const lastDest = i === starts.length - 1;
+    const end = lastDest ? v.ret : starts[i + 1];
+    nights.push(end - start);
+    // The days this destination pays: its nights, and the return day for the last destination.
+    // At least its first day, whose file gives its name.
+    const lastDay = lastDest ? v.ret : Math.max(start, end - 1);
+    for (let day = start; day <= lastDay; day++) {
+      const fy = fiscalYearOf(day);
+      const key = fy + '/' + dests[i].state;
+      if (!seen[key]) {
+        seen[key] = true;
+        needed.push([fy, dests[i].state]);
+      }
+    }
+  });
+
+  return { ok: true, depart: v.depart, ret: v.ret, days: v.days, fiscalYears: v.fiscalYears,
+    sameDay: sameDay, starts: starts, nights: nights, needed: needed };
+}
+
 function byCity(a, b) {
   return a.city < b.city ? -1 : a.city > b.city ? 1 : 0;
 }
@@ -140,43 +224,154 @@ function resolveRate(stateData, value) {
     s.lodging, s.lodging, s.lodging, s.lodging, s.lodging, s.lodging], city: null, standard: true };
 }
 
-// input: { departIso, returnIso, meta, files: { [fy]: stateData }, location: did | 'std' }
-// files must hold every fiscal year the trip touches (validateDates(...).fiscalYears).
-// Returns { ok: true, days, nights, lodging, mie, meals, incidentals, total, city, rows[] }
-// or { ok: false, error }. All money in dollars, exact (quarters are exact in binary).
-function calculate(input) {
-  const v = validateDates(input.departIso, input.returnIso, input.meta);
+function stateFile(files, fy, st) {
+  const file = files[fy] && files[fy][st];
+  if (!file) throw new Error('calculateTrip: no data file for FY' + fy + ' ' + st);
+  return file;
+}
+
+// Name used in messages, summaries and rows: the city from the data file (the fiscal year of the
+// destination's first day, else any other loaded year), "{State} (standard rate)", or
+// "destination k" while no location is chosen.
+function placeName(dest, index, files, startFy) {
+  const fallback = 'destination ' + (index + 1);
+  if (!dest.location) return fallback;
+  if (dest.location === 'std') return dest.stateName ? dest.stateName + ' (standard rate)' : 'Standard rate';
+  const years = [String(startFy)].concat(Object.keys(files).sort());
+  for (let i = 0; i < years.length; i++) {
+    const file = i === 0 ? stateFile(files, startFy, dest.state) : files[years[i]][dest.state];
+    if (!file) continue;
+    for (let j = 0; j < file.locations.length; j++) {
+      if (file.locations[j].did === dest.location) return file.locations[j].city;
+    }
+  }
+  return fallback;
+}
+
+function sumRows(rows) {
+  const s = { lodging: 0, mie: 0, meals: 0, incidentals: 0 };
+  rows.forEach(function (r) {
+    s.lodging += r.lodging;
+    s.mie += r.mie;
+    s.meals += r.meals;
+    s.incidentals += r.incidentals;
+  });
+  s.total = s.lodging + s.mie;
+  return s;
+}
+
+// input: { departIso, returnIso, over12, meta, files: { [fy]: { [ST]: stateData } },
+//   destinations: [{ state, location: did | 'std', arrive: 'YYYY-MM-DD' | null, stateName }] }
+// files must hold every pair in validateTrip(...).needed. over12 is read only on a same-day trip;
+// anything but false (also a missing switch: old markup) pays the 75% day.
+// Returns { ok: false, error, incomplete } or { ok: true, tripType: 'overnight' | 'day' | 'day_short',
+//   days, nights, lodging, mie, meals, incidentals, total, rateUsed, notice, rows[], destinations[] }.
+// rows: one per day, with the index and place of the destination whose rate applies that day.
+// destinations: per-destination totals in travel order. rateUsed: index of the destination whose
+// M&IE paid a same-day trip, else null. notice: the day_short message. Money is exact dollars.
+function calculateTrip(input) {
+  const v = validateTrip(input, input.meta);
   if (!v.ok) return v;
-  const fullIncidentals = input.meta.incidentals;
-  const rows = [];
-  const sum = { lodging: 0, mie: 0, meals: 0, incidentals: 0 };
-  let city = null;
-
-  for (let i = 0; i < v.days; i++) {
-    const day = v.depart + i;
-    const fy = fiscalYearOf(day);
-    const file = input.files[fy];
-    if (!file) throw new Error('calculate: no data file for FY' + fy);
-    const rate = resolveRate(file, input.location);
-    if (!rate) return { ok: false, error: MESSAGES.locationGap };
-    if (city === null && rate.city !== null) city = rate.city;
-
-    const edge = i === 0 || i === v.days - 1;
-    const lodging = i < v.days - 1 ? rate.lodging[dayParts(day).month] : 0;
-    const mie = edge ? rate.mie * 0.75 : rate.mie;
-    const incidentals = edge ? fullIncidentals * 0.75 : fullIncidentals;
-    const meals = mie - incidentals;
-    rows.push({ date: toISODate(day), fiscalYear: fy, lodging: lodging, meals: meals,
-      incidentals: incidentals, mie: mie, total: lodging + mie, standard: rate.standard });
-    sum.lodging += lodging;
-    sum.mie += mie;
-    sum.meals += meals;
-    sum.incidentals += incidentals;
+  const dests = input.destinations;
+  const places = dests.map(function (d, i) {
+    return placeName(d, i, input.files, fiscalYearOf(v.starts[i]));
+  });
+  if (!v.sameDay) {
+    for (let i = 0; i < dests.length; i++) {
+      if (v.nights[i] === 0) return fail(MESSAGES.noNight(places[i]));
+    }
   }
 
-  return { ok: true, days: v.days, nights: v.days - 1, lodging: sum.lodging, mie: sum.mie,
-    meals: sum.meals, incidentals: sum.incidentals, total: sum.lodging + sum.mie, city: city,
-    rows: rows };
+  const fullIncidentals = input.meta.incidentals;
+  const short = v.sameDay && input.over12 === false;
+  const rows = [];
+  let rateUsed = null;
+  const rateFor = function (k, fy) {
+    return resolveRate(stateFile(input.files, fy, dests[k].state), dests[k].location);
+  };
+  const gap = function (k) {
+    return { ok: false, error: MESSAGES.rateGap(places[k]), incomplete: false, rateGap: true };
+  };
+  const addRow = function (day, k, rate, edge, lodging) {
+    const mie = edge ? rate.mie * 0.75 : rate.mie;
+    const incidentals = edge ? fullIncidentals * 0.75 : fullIncidentals;
+    rows.push({ date: toISODate(day), fiscalYear: fiscalYearOf(day), lodging: lodging,
+      meals: mie - incidentals, incidentals: incidentals, mie: mie, total: lodging + mie,
+      standard: rate.standard, destination: k, place: places[k] });
+  };
+
+  if (v.sameDay) {
+    // One 75% day at the highest M&IE among the places visited (tie: the earliest).
+    if (!short) {
+      const fy = fiscalYearOf(v.depart);
+      let best = null;
+      for (let k = 0; k < dests.length; k++) {
+        const rate = rateFor(k, fy);
+        if (!rate) return gap(k);
+        if (best === null || rate.mie > best.mie) {
+          best = rate;
+          rateUsed = k;
+        }
+      }
+      addRow(v.depart, rateUsed, best, true, 0);
+    }
+  } else {
+    // Night n belongs to the destination where they sleep; day n takes that night's rate. The
+    // return day has no night and keeps the previous night's destination. Each day reads its own
+    // fiscal year's file; only the trip's first and last day are 75%.
+    let k = 0;
+    for (let i = 0; i < v.days; i++) {
+      const day = v.depart + i;
+      const last = i === v.days - 1;
+      while (!last && k < dests.length - 1 && v.starts[k + 1] <= day) k++;
+      const rate = rateFor(k, fiscalYearOf(day));
+      if (!rate) return gap(k);
+      addRow(day, k, rate, i === 0 || last, last ? 0 : rate.lodging[dayParts(day).month]);
+    }
+  }
+
+  const sum = sumRows(rows);
+  const destinations = dests.map(function (d, k) {
+    const own = rows.filter(function (r) { return r.destination === k; });
+    const s = sumRows(own);
+    return { state: d.state, location: d.location, stateName: d.stateName, place: places[k],
+      startIso: toISODate(v.starts[k]), endIso: toISODate(k < dests.length - 1 ? v.starts[k + 1] : v.ret),
+      nights: v.nights[k], days: own.length, lodging: s.lodging, mie: s.mie, meals: s.meals,
+      incidentals: s.incidentals, total: s.total };
+  });
+
+  return { ok: true, tripType: v.sameDay ? (short ? 'day_short' : 'day') : 'overnight', days: v.days,
+    nights: v.days - 1, lodging: sum.lodging, mie: sum.mie, meals: sum.meals, incidentals: sum.incidentals,
+    total: sum.total, rateUsed: rateUsed, notice: short ? MESSAGES.dayShort : null, rows: rows,
+    destinations: destinations };
+}
+
+// v1.0 single-destination API, kept as a thin wrapper over calculateTrip.
+// input: { departIso, returnIso, meta, files: { [fy]: stateData }, location: did | 'std' }
+// files must hold every fiscal year the trip touches (validateDates(...).fiscalYears).
+// Returns calculateTrip's result plus city (the location's city, null for the standard rate),
+// or { ok: false, error }. A same-day trip always pays the 75% day, as in v1.0.
+function calculate(input) {
+  const files = {};
+  Object.keys(input.files).forEach(function (fy) { files[fy] = { XX: input.files[fy] }; });
+  const r = calculateTrip({ departIso: input.departIso, returnIso: input.returnIso, over12: true,
+    meta: input.meta, files: files,
+    destinations: [{ state: 'XX', location: input.location, arrive: null, stateName: input.stateName }] });
+  if (!r.ok) return r.rateGap ? fail(MESSAGES.locationGap) : r;
+  const named = r.rows.some(function (row) { return !row.standard; });
+  r.city = input.location !== 'std' && named ? r.destinations[0].place : null;
+  return r;
+}
+
+// GA4 location_type: 'mixed' when a trip has both standard-rate and city destinations.
+function locationType(destinations) {
+  let std = false;
+  let nsa = false;
+  destinations.forEach(function (d) {
+    if (d.location === 'std') std = true;
+    else nsa = true;
+  });
+  return std && nsa ? 'mixed' : std ? 'standard' : 'nsa';
 }
 
 let wholeFmt = null;
@@ -204,24 +399,116 @@ function formatDateRange(depart, ret) {
 }
 
 // "3 days in San Francisco, 1–3 Oct 2026. Total allowance $788."
-function summaryText(result, place, departIso, returnIso) {
+// note (optional) is a sentence placed before the total.
+function summaryText(result, place, departIso, returnIso, note) {
   return result.days + (result.days === 1 ? ' day' : ' days') + ' in ' + place + ', ' +
-    formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
-    '. Total allowance ' + formatMoney(result.total) + '.';
+    formatDateRange(parseISODate(departIso), parseISODate(returnIso)) + '. ' + (note ? note + ' ' : '') +
+    'Total allowance ' + formatMoney(result.total) + '.';
+}
+
+// Summary for a calculateTrip result: places in travel order ("A", "A and B", "A, B and C"). A
+// same-day trip to several places names the one whose rate applies. day_short gives its notice.
+function tripSummaryText(result, departIso, returnIso) {
+  if (result.notice) return result.notice;
+  const places = result.destinations.map(function (d) { return d.place; });
+  const list = places.length === 1 ? places[0]
+    : places.slice(0, -1).join(', ') + ' and ' + places[places.length - 1];
+  let note = '';
+  if (result.rateUsed !== null && places.length > 1) {
+    const used = result.destinations[result.rateUsed];
+    note = (used.location === 'std' ? 'The ' + used.stateName + ' standard rate' : used.place + '’s rate') +
+      ' applies (the highest).';
+  }
+  return summaryText(result, list, departIso, returnIso, note);
+}
+
+// GA4 params for perdiem_calculate and perdiem_export (v1.1 spec §9): codes and counts only, never
+// dates, place names or anything typed.
+function analyticsParams(result) {
+  return { state: result.destinations[0].state, location_type: locationType(result.destinations),
+    days: result.days, destinations: result.destinations.length, trip_type: result.tripType };
+}
+
+// Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
+function csvCell(value) {
+  let s = String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = '\'' + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+// Plain numbers for Excel in any locale: 279, 65.25 (never $ or thousands separators).
+function csvNumber(n) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+// A destination as the export names it: "New York City, New York" or "Standard rate, New York".
+function csvPlace(d) {
+  return (d.location === 'std' ? 'Standard rate' : d.place) + ', ' + d.stateName;
+}
+
+// CSV export of a calculateTrip result (phase-4 spec "Export", v1.1 spec §8). todayIso is the
+// Generated date. Each day row names the destination it belongs to; an overnight trip with 2+
+// destinations gets a subtotal row after each destination's last day. A same-day trip to several
+// places adds the rate-used line instead (it has one day row, so no subtotals).
+// Returns { filename, text }: text starts with the UTF-8 BOM and ends every line with CRLF.
+function buildCsv(result, departIso, returnIso, todayIso) {
+  const n = csvNumber;
+  const dests = result.destinations;
+  const multi = dests.length > 1;
+  const today = parseISODate(todayIso);
+  const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + dests.map(function (d) {
+    return csvPlace(d) + ' (' + formatDateRange(parseISODate(d.startIso), parseISODate(d.endIso)) + ')';
+  }).join('; ') : csvPlace(dests[0])]];
+  if (multi && result.rateUsed !== null) {
+    const used = dests[result.rateUsed];
+    lines.push(['Same-day trip, away more than 12 hours. Rate used: ' +
+      (used.location === 'std' ? used.stateName + ' standard rate' : used.place) + ' (the highest of your stops).']);
+  }
+  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
+    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
+  ['Source: U.S. General Services Administration per diem rates'],
+  ['Generated ' + formatDateRange(today, today)],
+  [],
+  ['Date', 'Fiscal year', 'Location', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Day total (USD)']);
+  const subtotals = multi && result.tripType === 'overnight';
+  result.rows.forEach(function (row, i) {
+    lines.push([row.date, 'FY' + row.fiscalYear, csvPlace(dests[row.destination]),
+      i < result.nights ? n(row.lodging) : '', n(row.meals), n(row.incidentals), n(row.total)]);
+    const next = result.rows[i + 1];
+    if (subtotals && (!next || next.destination !== row.destination)) {
+      const d = dests[row.destination];
+      lines.push(['Subtotal: ' + d.place, '', '', n(d.lodging), n(d.meals), n(d.incidentals), n(d.total)]);
+    }
+  });
+  lines.push(['Total', '', '', n(result.lodging), n(result.meals), n(result.incidentals), n(result.total)]);
+  return {
+    filename: 'per-diem-' + (multi ? 'multi-city' : dests[0].state.toLowerCase()) + '-' + departIso + '-to-' +
+      returnIso + '.csv',
+    text: '﻿' + lines.map(function (cells) { return cells.map(csvCell).join(','); }).join('\r\n') + '\r\n'
+  };
 }
 
 // ---- src/perdiem.js ----
-// DOM wiring for the per diem calculator. Spec: docs/phase-4-calculator.md.
-// Adds behaviour to the existing Webflow markup (data-pd hooks) — never adds layout or styles.
+// DOM wiring for the per diem calculator. Spec: docs/phase-4-calculator.md, extended by
+// docs/v1.1.0-multi-city.md (multi-city rows, same-day switch).
+// Adds behaviour to the existing Webflow markup (data-pd hooks) — never adds layout or styles, apart
+// from cloning the v1.1 destination template (spec §7).
 // Only runs as part of dist/perdiem.js: scripts/build-js.js drops the import below and inlines
 // calc-core.js into the same IIFE. Keep syntax at ES2019 or older.
 
 
 // Must be read while the script first executes; it is null inside later callbacks.
 const SCRIPT = document.currentScript;
-const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.0.1/';
+const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.1.0/';
 const HOOKS = ['depart', 'return', 'state', 'location', 'message', 'export', 'days', 'total',
   'lodging', 'meals', 'incidentals'];
+// v1.1 hooks, all optional (spec §7). Without dest-list, dest-template and add the calculator keeps one
+// destination, as v1.0.1; without over12 a same-day trip pays the 75% day.
+const V11_HOOKS = { over12: 'over12', over12Wrap: 'over12-wrap', title1: 'dest1-title', list: 'dest-list',
+  tpl: 'dest-template', addWrap: 'add-wrap', add: 'add', addNote: 'add-note' };
+// data-pd-dest hooks inside one template row.
+const ROW_HOOKS = { title: 'title', remove: 'remove', arriveField: 'arrive-field', arrive: 'arrive',
+  state: 'state', location: 'location' };
 const LOAD_ERROR = 'Rates couldn’t load. Please try again.';
 
 // Repo root at the same tag as this script: …/itilite-per-diem@v1.0.0/dist/perdiem.min.js → …@v1.0.0/
@@ -269,37 +556,65 @@ function setText(el, text) {
   if (el.textContent !== text) el.textContent = text;
 }
 
+// The hooks of one template row, or null if any is missing.
+function rowHooks(row) {
+  const x = { row: row };
+  const names = Object.keys(ROW_HOOKS);
+  for (let i = 0; i < names.length; i++) {
+    x[names[i]] = row.querySelector('[data-pd-dest="' + ROW_HOOKS[names[i]] + '"]');
+    if (!x[names[i]]) return null;
+  }
+  return x;
+}
+
+// A destination: its State and City or county selects (destination 1: the v1.0 hooks, arrive null;
+// k >= 2: a template row) plus the state of its location menu.
+function newDest(x) {
+  x.menuKey = x.wantMenu = null;
+  x.menuState = x.selected = '';
+  return x;
+}
+
 function init(root) {
+  const q = (name) => root.querySelector('[data-pd="' + name + '"]');
   const e = {};
   for (let i = 0; i < HOOKS.length; i++) {
-    e[HOOKS[i]] = root.querySelector('[data-pd="' + HOOKS[i] + '"]');
+    e[HOOKS[i]] = q(HOOKS[i]);
     if (!e[HOOKS[i]]) {
       console.warn('[perdiem] missing hook data-pd="' + HOOKS[i] + '"; calculator not started');
       return;
     }
   }
+  Object.keys(V11_HOOKS).forEach((k) => { e[k] = q(V11_HOOKS[k]); });
+  const parts = [e.list, e.tpl, e.add].filter(Boolean).length;
+  const row = parts === 3 && e.tpl.content && e.tpl.content.firstElementChild;
+  const multi = !!(row && rowHooks(row));
+  if (parts && !multi) {
+    console.warn('[perdiem] incomplete destination markup (dest-list, dest-template, add, data-pd-dest); ' +
+      'running with one destination');
+  }
+
   const pre = (root.getAttribute('data-state') || '').trim().toUpperCase();
   const c = {
     e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null,
-    menuKey: null, wantMenu: null, menuState: '', selected: '', result: null, timer: 0, fired: {}
+    dests: [newDest({ state: e.state, location: e.location, arrive: null })], result: null, timer: 0, fired: {}
   };
   if (pre && Array.prototype.some.call(e.state.options, (o) => o.value === pre)) e.state.value = pre;
 
-  const onDates = () => { syncReturnMin(c); update(c); };
+  const onChange = () => update(c);
   ['input', 'change'].forEach((type) => {
-    e.depart.addEventListener(type, onDates);
-    e.return.addEventListener(type, onDates);
+    e.depart.addEventListener(type, onChange);
+    e.return.addEventListener(type, onChange);
   });
   openPickerOnClick(e.depart);
   openPickerOnClick(e.return);
-  e.state.addEventListener('change', () => {
-    c.selected = '';
-    c.menuKey = c.wantMenu = null;
-    clearResults(c);
-    update(c);
-  });
-  e.location.addEventListener('change', () => { c.selected = e.location.value; update(c); });
+  wireDest(c, c.dests[0]);
+  if (e.over12) e.over12.addEventListener('change', onChange);
   e.export.addEventListener('click', () => exportCsv(c));
+  if (multi) {
+    e.add.addEventListener('click', () => addDest(c));
+    if (e.addWrap) e.addWrap.hidden = false;
+  }
 
   // Lazy start: nothing is fetched until the card is near the viewport or a field gets focus.
   const activate = () => {
@@ -318,6 +633,74 @@ function init(root) {
   }
 }
 
+// Changing a destination's state clears only that destination's location.
+function wireDest(c, x) {
+  const onChange = () => update(c);
+  x.state.addEventListener('change', () => {
+    x.selected = '';
+    x.menuKey = x.wantMenu = null;
+    clearResults(c);
+    update(c);
+  });
+  x.location.addEventListener('change', () => { x.selected = x.location.value; update(c); });
+  if (!x.arrive) return;
+  x.arrive.addEventListener('input', onChange);
+  x.arrive.addEventListener('change', onChange);
+  openPickerOnClick(x.arrive);
+  x.remove.addEventListener('click', () => removeDest(c, x));
+}
+
+// Add another destination (spec §6): a template row whose State menu copies destination 1's options,
+// prefilled with the previous destination's state. Focus goes to its first visible field.
+function addDest(c) {
+  const e = c.e;
+  if (c.dests.length >= MAX_DESTINATIONS) return;
+  const x = newDest(rowHooks(document.importNode(e.tpl.content.firstElementChild, true)));
+  Array.prototype.forEach.call(e.state.options, (o) => { if (o.value) x.state.add(new Option(o.text, o.value)); });
+  x.state.value = c.dests[c.dests.length - 1].state.value;
+  wireDest(c, x);
+  e.list.appendChild(x.row);
+  c.dests.push(x);
+  layout(c);
+  sync(c);
+  (x.arriveField.hidden ? x.state : x.arrive).focus();
+  update(c);
+}
+
+// Remove a destination; a menu still loading for it is dropped. Focus goes to the Add button.
+function removeDest(c, x) {
+  const i = c.dests.indexOf(x);
+  if (i < 1) return;
+  c.dests.splice(i, 1);
+  x.wantMenu = null;
+  x.row.parentNode.removeChild(x.row);
+  layout(c);
+  c.e.add.focus();
+  update(c);
+}
+
+// Numbering after add or remove: legend, Remove label, ids and label for; the "Destination 1" title
+// from 2 destinations; the Add button and its note at the limit.
+function layout(c) {
+  const e = c.e;
+  const n = c.dests.length;
+  c.dests.forEach((x, i) => {
+    if (!i) return;
+    const k = i + 1;
+    setText(x.title, 'Destination ' + k);
+    x.remove.setAttribute('aria-label', 'Remove destination ' + k);
+    ['arrive', 'state', 'location'].forEach((name) => {
+      const el = x[name];
+      const label = (el.closest('.perdiem-calc_field') || el.parentNode).querySelector('label');
+      el.id = 'pd-dest-' + k + '-' + name;
+      if (label) label.htmlFor = el.id;
+    });
+  });
+  if (e.title1) e.title1.hidden = n < 2;
+  e.add.disabled = n >= MAX_DESTINATIONS;
+  if (e.addNote) e.addNote.hidden = n < MAX_DESTINATIONS;
+}
+
 // A mouse or pen click anywhere in a date field opens the calendar, not only its icon. The pointer
 // type comes from the pointerdown before the click: keyboard use (Tab, typing) has none, so it is
 // untouched, and touch is skipped because phones open their own picker.
@@ -334,64 +717,84 @@ function openPickerOnClick(input) {
   });
 }
 
-function stateName(c) {
-  const o = c.e.state.options[c.e.state.selectedIndex];
+function stateName(x) {
+  const o = x.state.options[x.state.selectedIndex];
   return o ? o.text.trim() : '';
 }
 
-function setOptions(c, options, value, disabled) {
-  const sel = c.e.location;
+function setOptions(x, options, value, disabled) {
+  const sel = x.location;
   while (sel.options.length) sel.remove(0);
   options.forEach((o) => sel.add(new Option(o.label, o.value)));
   sel.value = value;
   sel.disabled = disabled;
 }
 
-function syncReturnMin(c) {
-  if (!c.range) return;
+function sameDay(c) {
   const d = parseISODate(c.e.depart.value);
-  const r = parseISODate(c.e.return.value);
-  c.e.return.min = d !== null && (r === null || r < d) ? c.e.depart.value : toISODate(c.range.min);
+  return d !== null && d === parseISODate(c.e.return.value);
 }
 
-// Location menu for state st, built from fiscal year fy (rule 6). Rebuilding for another fiscal
-// year keeps the selection when the same did exists.
-function ensureMenu(c, st, fy) {
+// Field state that follows the dates, re-applied on every update: the return date's min, the same-day
+// switch (Arrive on hides, keeping its value), and each Arrive on's min (the previous destination's
+// date + 1) and max (return − 1). Typed dates bypass min/max; validateTrip still checks them.
+function sync(c) {
+  const e = c.e;
+  const d = parseISODate(e.depart.value);
+  const r = parseISODate(e.return.value);
+  const same = sameDay(c);
+  const bound = (day, edge) => (day !== null ? toISODate(day) : c.range ? toISODate(c.range[edge]) : '');
+  if (c.range) e.return.min = d !== null && (r === null || r < d) ? e.depart.value : toISODate(c.range.min);
+  if (e.over12Wrap) e.over12Wrap.hidden = !same;
+  let prev = d;
+  c.dests.forEach((x, i) => {
+    if (!i) return;
+    x.arriveField.hidden = same;
+    x.arrive.min = bound(prev !== null ? prev + 1 : null, 'min');
+    x.arrive.max = bound(r !== null ? r - 1 : null, 'max');
+    const a = parseISODate(x.arrive.value);
+    if (a !== null) prev = a;
+  });
+}
+
+// Location menu of destination x for state st, built from fiscal year fy (phase-4 rule 6). Rebuilding
+// for another fiscal year keeps the selection when the same did exists.
+function ensureMenu(c, x, st, fy) {
   const key = st + '/' + fy;
-  if (c.menuKey === key) return Promise.resolve();
-  c.wantMenu = key;
+  if (x.menuKey === key) return null;
+  x.wantMenu = key;
   const url = stateUrl(fy, st);
   if (!loaded(url)) {
-    setOptions(c, [{ value: '', label: 'Loading…' }], '', true);
+    setOptions(x, [{ value: '', label: 'Loading…' }], '', true);
     showMessage(c, c.initial, false);
   }
   return load(url).then((data) => {
-    if (c.wantMenu !== key) return;
-    const menu = buildLocationOptions(data, stateName(c));
+    if (x.wantMenu !== key) return;
+    const menu = buildLocationOptions(data, stateName(x));
     const options = menu.preselect ? menu.options
       : [{ value: '', label: 'Choose a city or county' }].concat(menu.options);
-    const keep = c.menuState === st && c.selected &&
-      options.some((o) => o.value === c.selected) ? c.selected : '';
-    c.selected = keep || menu.preselect;
-    setOptions(c, options, c.selected, false);
-    c.menuKey = key;
-    c.menuState = st;
+    const keep = x.menuState === st && x.selected &&
+      options.some((o) => o.value === x.selected) ? x.selected : '';
+    x.selected = keep || menu.preselect;
+    setOptions(x, options, x.selected, false);
+    x.menuKey = key;
+    x.menuState = st;
   }, (err) => {
-    if (c.wantMenu === key) {
-      setOptions(c, [{ value: '', label: 'Rates couldn’t load' }], '', true);
-      c.wantMenu = null;
+    if (x.wantMenu === key) {
+      setOptions(x, [{ value: '', label: 'Rates couldn’t load' }], '', true);
+      x.wantMenu = null;
     }
     throw err;
   });
 }
 
 // No state chosen: menuKey '' marks the menu as already showing "Choose a state first".
-function clearMenu(c) {
-  if (c.menuKey === '') return;
-  c.menuKey = '';
-  c.wantMenu = null;
-  c.menuState = c.selected = '';
-  setOptions(c, [{ value: '', label: 'Choose a state first' }], '', true);
+function clearMenu(x) {
+  if (x.menuKey === '') return;
+  x.menuKey = '';
+  x.wantMenu = null;
+  x.menuState = x.selected = '';
+  setOptions(x, [{ value: '', label: 'Choose a state first' }], '', true);
 }
 
 // Recalculation trigger: every field change (and first activation) calls this. A newer call
@@ -399,9 +802,12 @@ function clearMenu(c) {
 function update(c) {
   const seq = ++c.seq;
   const current = () => seq === c.seq;
-  // A state is chosen (preselected on state pages) but its menu isn't built yet.
-  const menuPending = () => c.e.state.value && (!c.menuKey || c.menuKey.indexOf(c.e.state.value + '/') !== 0);
-  if (menuPending() && !loaded(META_URL)) setOptions(c, [{ value: '', label: 'Loading…' }], '', true);
+  sync(c);
+  // A state is chosen (preselected on state pages, prefilled on new rows) but its menu isn't built yet.
+  const pending = (x) => x.state.value && (!x.menuKey || x.menuKey.indexOf(x.state.value + '/') !== 0);
+  if (!loaded(META_URL)) {
+    c.dests.forEach((x) => { if (pending(x)) setOptions(x, [{ value: '', label: 'Loading…' }], '', true); });
+  }
   load(META_URL)
     .then((meta) => {
       if (!current()) return;
@@ -411,20 +817,25 @@ function update(c) {
           el.min = toISODate(c.range.min);
           el.max = toISODate(c.range.max);
         });
-        syncReturnMin(c);
+        sync(c);
       }
-      const st = c.e.state.value;
-      if (!st) {
-        clearMenu(c);
-        return compute(c, meta, current);
-      }
-      return ensureMenu(c, st, menuFiscalYear(meta, c.e.depart.value, todayIso()))
-        .then(() => { if (current()) return compute(c, meta, current); });
+      // Each menu uses the fiscal year of its destination's start: the departure date for
+      // destination 1 and on same-day trips, else its Arrive on date, else the departure date.
+      const same = sameDay(c);
+      return Promise.all(c.dests.map((x, i) => {
+        const st = x.state.value;
+        if (!st) return clearMenu(x);
+        const start = i && !same && parseISODate(x.arrive.value) !== null ? x.arrive.value : c.e.depart.value;
+        return ensureMenu(c, x, st, menuFiscalYear(meta, start, todayIso()));
+      })).then(() => { if (current()) return compute(c, meta, current); });
     })
     .catch((err) => {
       if (!current()) return;
       console.warn('[perdiem]', err);
-      if (menuPending()) setOptions(c, [{ value: '', label: 'Rates couldn’t load' }], '', true);
+      // Menus that failed say so themselves; this covers the ones meta.json never let start.
+      c.dests.forEach((x) => {
+        if (pending(x) && !x.wantMenu) setOptions(x, [{ value: '', label: 'Rates couldn’t load' }], '', true);
+      });
       const tableBelow = c.pre && c.pre === c.e.state.value;
       showMessage(c, LOAD_ERROR + (tableBelow ? ' The full rate table is below.' : ''), true);
     });
@@ -434,38 +845,41 @@ function compute(c, meta, current) {
   const e = c.e;
   const d = e.depart.value;
   const r = e.return.value;
-  const st = e.state.value;
-  const loc = e.location.value;
   if (!d && !r) return showMessage(c, c.initial, false);
   if (!d) return showMessage(c, 'Choose your departure date', false);
   if (!r) return showMessage(c, 'Choose your return date', false);
-  const v = validateDates(d, r, meta);
-  if (!v.ok) return showMessage(c, v.error, true);
-  if (!st) return showMessage(c, 'Choose a state', false);
-  if (!loc) return showMessage(c, 'Choose a city or county', false);
+  const trip = {
+    departIso: d, returnIso: r, over12: e.over12 ? e.over12.checked : undefined, meta: meta,
+    destinations: c.dests.map((x) => ({ state: x.state.value, location: x.location.value,
+      arrive: x.arrive ? x.arrive.value : null, stateName: stateName(x) }))
+  };
+  const v = validateTrip(trip, meta);
+  if (!v.ok) return showMessage(c, v.error, !v.incomplete);
 
-  // Don't leave the previous trip's result on screen while another fiscal year's file loads.
-  if (!v.fiscalYears.every((fy) => loaded(stateUrl(fy, st)))) showMessage(c, c.initial, false);
-  return Promise.all(v.fiscalYears.map((fy) => load(stateUrl(fy, st)))).then((list) => {
+  // Exactly the state files the trip reads. Don't leave the previous result on screen while one loads.
+  const urls = v.needed.map((p) => stateUrl(p[0], p[1]));
+  if (!urls.every(loaded)) showMessage(c, c.initial, false);
+  return Promise.all(urls.map(load)).then((list) => {
     if (!current()) return;
-    const files = {};
-    v.fiscalYears.forEach((fy, i) => { files[fy] = list[i]; });
-    const res = calculate({ departIso: d, returnIso: r, meta: meta, files: files, location: loc });
-    if (!res.ok) return showMessage(c, res.error, true);
+    trip.files = {};
+    v.needed.forEach((p, i) => { (trip.files[p[0]] = trip.files[p[0]] || {})[p[1]] = list[i]; });
+    const res = calculateTrip(trip);
+    // One destination keeps the v1.0.1 wording.
+    if (!res.ok) return showMessage(c, res.rateGap && c.dests.length === 1 ? MESSAGES.locationGap : res.error, true);
 
-    const name = stateName(c);
-    const place = loc === 'std' ? name + ' (standard rate)' : e.location.options[e.location.selectedIndex].text;
     setText(e.days, String(res.days));
     setText(e.total, formatMoney(res.total));
     setText(e.lodging, formatMoney(res.lodging));
     setText(e.meals, formatMoney(res.meals));
     setText(e.incidentals, formatMoney(res.incidentals));
-    setText(e.message, summaryText(res, place, d, r));
+    setText(e.message, tripSummaryText(res, d, r));
     e.message.classList.remove('is-error');
-    e.export.disabled = false;
+    // A day trip of 12 hours or less is a valid $0 result, with nothing to export.
+    e.export.disabled = res.tripType === 'day_short';
     c.result = {
-      key: [st, loc, d, r].join('|'), res: res, st: st, name: name, loc: loc, place: place, d: d, r: r,
-      params: { state: st, location_type: loc === 'std' ? 'standard' : 'nsa', days: res.days }
+      key: [d, r, trip.over12].concat(trip.destinations.map((x) => [x.state, x.location, x.arrive].join('/')))
+        .join('|'),
+      res: res, d: d, r: r, params: analyticsParams(res)
     };
     scheduleCalculateEvent(c);
   });
@@ -498,46 +912,14 @@ function scheduleCalculateEvent(c) {
   }, 1500);
 }
 
-// Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
-function csvCell(value) {
-  let s = String(value);
-  if (/^[=+\-@\t\r]/.test(s)) s = '\'' + s;
-  return '"' + s.replace(/"/g, '""') + '"';
-}
-
-// Plain numbers for Excel in any locale: 279, 65.25 (never $ or thousands separators).
-const csvNumber = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
-
-function buildCsv(x) {
-  const res = x.res;
-  const n = csvNumber;
-  const range = formatDateRange(parseISODate(x.d), parseISODate(x.r));
-  const today = parseISODate(todayIso());
-  const lines = [
-    ['ITILITE per diem estimate'],
-    [x.loc === 'std' ? 'Standard rate, ' + x.name : x.place + ', ' + x.name],
-    ['Travel dates: ' + range + ' (' + res.days + (res.days === 1 ? ' day)' : ' days)')],
-    ['Source: U.S. General Services Administration per diem rates'],
-    ['Generated ' + formatDateRange(today, today)],
-    [],
-    ['Date', 'Fiscal year', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Day total (USD)']
-  ];
-  res.rows.forEach((row, i) => {
-    lines.push([row.date, 'FY' + row.fiscalYear, i < res.nights ? n(row.lodging) : '',
-      n(row.meals), n(row.incidentals), n(row.total)]);
-  });
-  lines.push(['Total', '', n(res.lodging), n(res.meals), n(res.incidentals), n(res.total)]);
-  return lines.map((cells) => cells.map(csvCell).join(',')).join('\r\n') + '\r\n';
-}
-
 function exportCsv(c) {
   const x = c.result;
-  if (!x) return;
-  const blob = new Blob(['﻿' + buildCsv(x)], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  if (!x || x.res.tripType === 'day_short') return;
+  const csv = buildCsv(x.res, x.d, x.r, todayIso());
+  const url = URL.createObjectURL(new Blob([csv.text], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'per-diem-' + x.st.toLowerCase() + '-' + x.d + '-to-' + x.r + '.csv';
+  a.download = csv.filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -549,7 +931,8 @@ function start() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-perdiem-calc]'), init);
 }
 
-window.ItilitePerDiem = { base: BASE, cache: cache, calculate: calculate, validateDates: validateDates };
+window.ItilitePerDiem = { base: BASE, cache: cache, calculate: calculate, calculateTrip: calculateTrip,
+  validateDates: validateDates };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
 })();

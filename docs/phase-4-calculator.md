@@ -2,6 +2,8 @@
 
 > Save as `docs/phase-4-calculator.md` in the repo. `CLAUDE.md`'s "Calculator maths" section points here.
 > Everything below is **locked** unless marked *(verify)*. Propose before changing anything else.
+> v1.1.0 extends this spec: `docs/v1.1.0-multi-city.md` (multi-city trips, same-day switch, extra hooks,
+> CSV Location column and subtotals, GA4 params, size target). Where the two differ, v1.1.0 wins.
 
 ## What the script does
 
@@ -30,9 +32,9 @@ dist/perdiem.js         built file, committed
   exist in the repo, so the page loads `dist/perdiem.min.js` while the repo only has `dist/perdiem.js`
   *(verify on the first tag; if jsDelivr doesn't, serve `perdiem.js` unminified — it's small)*.
 - Output: one IIFE, `'use strict'`, no globals except `window.ItilitePerDiem` (for debugging only).
-- Size target: under 15 KB as served (minified). `npm run build:js` prints an upper-bound estimate
-  (comments and whitespace stripped, no renaming) and warns above 15 KB; confirm the real
-  `perdiem.min.js` size on the first tag.
+- Size target (v1.1.0 §14): ≤ 20 KB minified and ≤ 8 KB gzipped as served. `npm run build:js` prints
+  upper-bound estimates (comments and whitespace stripped, no renaming; and that text gzipped) and warns
+  above either target; confirm the real `perdiem.min.js` size on each tag.
 - Browser support: current evergreen browsers. No transpiling; avoid syntax newer than ES2019.
 
 ## Hook contract (already in the Webflow markup — do not rename)
@@ -56,7 +58,7 @@ Nothing else in the markup may be changed by the script (no injected layout, no 
 
 - Base URL = the folder the script itself was loaded from, one level up from `dist/`
   (derive from `document.currentScript.src`). Code and data then always come from the **same tag**.
-  Fallback constant: `https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.0.0/` (update it
+  Fallback constant: `https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.1.0/` (update it
   with each release tag).
 - `data/meta.json` → fiscal years available, their `effective` / `expires` dates.
 - `data/{fy}/{ST}.json` → `standard` (`{lodging, mie}` or `null` for DC) and `locations[]`

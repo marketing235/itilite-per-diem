@@ -95,4 +95,6 @@ server.listen(PORT, HOST, () => {
   console.log('Serving ' + ROOT + ' on http://localhost:' + PORT);
   console.log('  http://localhost:' + PORT + '/test/harness.html        main page (no state)');
   console.log('  http://localhost:' + PORT + '/test/harness-state.html  state page (data-state="CA")');
+  console.log('  http://localhost:' + PORT + '/test/harness-v1.1.html        main page, v1.1 markup');
+  console.log('  http://localhost:' + PORT + '/test/harness-v1.1-state.html  state page, v1.1 markup (data-state="NY")');
 });
