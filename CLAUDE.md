@@ -247,6 +247,8 @@ export, analytics, golden tests). It wins over anything here. In short:
 7. **Money keeps cents** (75% days give .25/.50/.75). Sum exact values, never round intermediate
    steps; display cents only when the amount isn't a whole dollar (`$788`, `$55.50`).
 
+v1.1.0 (multi-city trips, same-day rules) is specified in docs/v1.1.0-multi-city.md, which extends docs/phase-4-calculator.md.
+
 ## Safety rules for the pull script
 
 - Refuse to write anything if: any state does not have **exactly one** `City === "Standard Rate"` row
