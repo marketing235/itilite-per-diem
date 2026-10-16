@@ -1,5 +1,6 @@
 // Golden tests from docs/phase-4-calculator.md (1–9) and docs/v1.1.0-multi-city.md (10–23), run
-// against the committed data/ files, plus the CSV export and GA4 params helpers (v1.1 §8, §9).
+// against the committed data/ files, plus the CSV export and GA4 params helpers (v1.1 §8, §9) and
+// the per-destination dates, breakdown and error targeting (v1.1 §17).
 // Run in several time zones: npm test, then TZ=America/Los_Angeles and TZ=Asia/Kolkata.
 
 import { test } from 'node:test';
@@ -8,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import {
   calculate, validateDates, buildLocationOptions, parseISODate, dayParts, fiscalYearOf, toISODate,
   formatMoney, summaryText, MESSAGES, calculateTrip, validateTrip, tripSummaryText, locationType,
-  buildCsv, analyticsParams
+  buildCsv, analyticsParams, destinationSpans, spanText
 } from '../src/calc-core.js';
 import { states } from '../scripts/lib/states.js';
 
@@ -308,8 +309,12 @@ test('18. Day trip, one city, switch on = golden test 3 (Wilmington, $55.50)', (
 test('19. No night at destination 1 (Pittsburgh arrives on the departure date)', () => {
   const r = runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-12']]);
   assert.equal(r.ok, false);
-  assert.equal(r.error, NO_NIGHT('New York City'));
+  // Destination 1 can't be removed, so the message points at destination 2's date (§17).
+  assert.equal(r.error,
+    'No night in New York City? Check destination 2’s date: per diem follows where you sleep each night.');
+  assert.equal(r.error, MESSAGES.noNightFirst('New York City'));
   assert.equal(r.incomplete, false);
+  assert.deepEqual([r.dest, r.field], [1, 'arrive']);
   assert.equal(r.total, undefined);
 });
 
@@ -317,6 +322,7 @@ test('20. Last destination has no night (Pittsburgh arrives on the return date)'
   const r = runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-16']]);
   assert.equal(r.ok, false);
   assert.equal(r.error, NO_NIGHT('Pittsburgh'));
+  assert.deepEqual([r.dest, r.field], [1, 'arrive']);
 });
 
 test('21. Destination 3 arrives before destination 2', () => {
@@ -325,6 +331,7 @@ test('21. Destination 3 arrives before destination 2', () => {
   assert.equal(r.ok, false);
   assert.equal(r.error, 'Destination 3 starts before destination 2. Check the dates.');
   assert.equal(r.incomplete, false);
+  assert.deepEqual([r.dest, r.field], [2, 'arrive']);
 });
 
 test('22. Destination 2 arrives after the return date', () => {
@@ -332,6 +339,7 @@ test('22. Destination 2 arrives after the return date', () => {
   assert.equal(r.ok, false);
   assert.equal(r.error, 'Destination 2’s date must be between your departure and return dates.');
   assert.equal(r.incomplete, false);
+  assert.deepEqual([r.dest, r.field], [1, 'arrive']);
 });
 
 test('23. Old markup (calc part): calculate() = one-destination calculateTrip; no switch pays 75%', () => {
@@ -514,4 +522,67 @@ test('GA4 params for tests 10, 15, 16 and 17', () => {
     { state: 'NY', location_type: 'nsa', days: 1, destinations: 2, trip_type: 'day' });
   assert.deepEqual(params('2026-10-12', '2026-10-12', [['NY', '266']], false),
     { state: 'NY', location_type: 'nsa', days: 1, destinations: 1, trip_type: 'day_short' });
+});
+
+// ---- v1.1.0 UX additions (docs/v1.1.0-multi-city.md §17) ----
+
+test('§17 destinationSpans: what each destination covers, from the dates alone', () => {
+  const spans = (d, r, arrives) => destinationSpans(d, r, arrives);
+  // Test 10: New York City 12–14 Oct, Pittsburgh 14–16 Oct.
+  assert.deepEqual(spans('2026-10-12', '2026-10-16', [null, '2026-10-14']), [
+    { startIso: '2026-10-12', endIso: '2026-10-14', nights: 2 },
+    { startIso: '2026-10-14', endIso: '2026-10-16', nights: 2 }
+  ]);
+  // Test 14: three cities, one-night middle stop.
+  assert.deepEqual(spans('2026-11-09', '2026-11-14', [null, '2026-11-11', '2026-11-12']).map((s) => s.nights), [2, 1, 2]);
+  // Until destination 2's date is known, neither destination 1's end nor destination 2 is.
+  assert.deepEqual(spans('2026-10-12', '2026-10-16', [null, '']), [null, null]);
+  // Destination 3 without a date: destination 1 is known, 2 and 3 aren't.
+  assert.deepEqual(spans('2026-11-09', '2026-11-14', [null, '2026-11-11', '']),
+    [{ startIso: '2026-11-09', endIso: '2026-11-11', nights: 2 }, null, null]);
+  // Out of order (test 21) or outside the trip (test 22): nothing from that destination on.
+  assert.deepEqual(spans('2026-11-09', '2026-11-14', [null, '2026-11-12', '2026-11-11'])[1], null);
+  assert.deepEqual(spans('2026-10-12', '2026-10-16', [null, '2026-10-17']), [null, null]);
+  // A destination with no night shows 0 nights (test 19); the error comes from calculateTrip.
+  assert.deepEqual(spans('2026-10-12', '2026-10-16', [null, '2026-10-12'])[0], { startIso: '2026-10-12', endIso: '2026-10-12', nights: 0 });
+  // Same-day, missing or reversed dates: nothing.
+  assert.deepEqual(spans('2026-10-12', '2026-10-12', [null, '']), [null, null]);
+  assert.deepEqual(spans('', '2026-10-16', [null, '2026-10-14']), [null, null]);
+  assert.deepEqual(spans('2026-10-16', '2026-10-12', [null, '2026-10-14']), [null, null]);
+  // One destination covers the whole trip.
+  assert.deepEqual(spans('2026-10-01', '2026-10-03', [null]), [{ startIso: '2026-10-01', endIso: '2026-10-03', nights: 2 }]);
+});
+
+test('§17 spanText and the per-destination totals for the breakdown', () => {
+  assert.equal(spanText({ startIso: '2026-10-12', endIso: '2026-10-14', nights: 2 }), '12–14 Oct 2026 · 2 nights');
+  assert.equal(spanText({ startIso: '2026-11-11', endIso: '2026-11-12', nights: 1 }), '11–12 Nov 2026 · 1 night');
+  assert.equal(spanText({ startIso: '2026-09-29', endIso: '2026-10-01', nights: 2 }), '29 Sep – 1 Oct 2026 · 2 nights');
+  assert.equal(spanText({ startIso: '2026-10-12', endIso: '2026-10-12', nights: 0 }), '12 Oct 2026 · 0 nights');
+  // The breakdown lines of test 10, as the result panel shows them.
+  const r = runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-14']]);
+  assert.deepEqual(r.destinations.map((d) => [d.place, spanText(d), formatMoney(d.total)]), [
+    ['New York City', '12–14 Oct 2026 · 2 nights', '$877'],
+    ['Pittsburgh', '14–16 Oct 2026 · 2 nights', '$508']
+  ]);
+  // The lines add up to the trip total.
+  assert.equal(r.destinations.reduce((s, d) => s + d.total, 0), r.total);
+});
+
+test('§17 every message says which destination and field it is about', () => {
+  const at = (r) => [r.dest, r.field];
+  // Trip dates (dest null).
+  assert.deepEqual(at(runTrip('2026-10-16', '2026-10-12', [['NY', '266']])), [null, 'return']);
+  assert.deepEqual(at(runTrip('2027-09-29', '2027-10-02', [['CA', '35']])), [null, 'return']);
+  assert.deepEqual(at(runTrip('2027-11-10', '2027-11-12', [['CA', 'std']])), [null, 'depart']);
+  assert.deepEqual(at(runTrip('2025-09-10', '2025-09-12', [['CA', 'std']])), [null, 'depart']);
+  assert.deepEqual(at(runTrip('2026-01-01', '2027-01-05', [['CA', 'std']])), [null, 'return']);
+  // Prompts: destination 1 and destination k.
+  assert.deepEqual(at(runTrip('2026-10-12', '2026-10-16', [['', '']])), [0, 'state']);
+  assert.deepEqual(at(runTrip('2026-10-12', '2026-10-16', [['NY', '']])), [0, 'location']);
+  assert.deepEqual(at(runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['', '', '']])), [1, 'arrive']);
+  assert.deepEqual(at(runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['', '', '2026-10-14']])), [1, 'state']);
+  assert.deepEqual(at(runTrip('2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '', '2026-10-14']])), [1, 'location']);
+  // validateDates names the date too (used by the v1.0 API).
+  assert.equal(validateDates('2026-10-16', '2026-10-12', meta).field, 'return');
+  assert.equal(validateDates('', '2026-10-12', meta).field, 'depart');
 });

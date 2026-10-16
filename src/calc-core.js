@@ -34,6 +34,10 @@ export const MESSAGES = {
   noNight: function (place) {
     return 'No night in ' + place + '? Remove it: per diem follows where you sleep each night.';
   },
+  // Destination 1 can't be removed, so point at the date that leaves it without a night.
+  noNightFirst: function (place) {
+    return 'No night in ' + place + '? Check destination 2’s date: per diem follows where you sleep each night.';
+  },
   rateGap: function (place) { return 'Rates for ' + place + ' aren’t available for all of your dates.'; }
 };
 
@@ -101,24 +105,23 @@ function monthYear(day) {
 }
 
 // Both dates must already be present. Returns { ok, depart, ret, days, fiscalYears } or
-// { ok: false, error }.
+// { ok: false, error, field }: field is the date to fix, 'depart' or 'return'.
 export function validateDates(departIso, returnIso, meta) {
   const depart = parseISODate(departIso);
   const ret = parseISODate(returnIso);
-  if (depart === null || ret === null) return { ok: false, error: 'Enter dates as YYYY-MM-DD.' };
-  if (ret < depart) return { ok: false, error: MESSAGES.returnBeforeDepart };
+  const bad = function (error, field) { return { ok: false, error: error, field: field }; };
+  if (depart === null || ret === null) return bad('Enter dates as YYYY-MM-DD.', depart === null ? 'depart' : 'return');
+  if (ret < depart) return bad(MESSAGES.returnBeforeDepart, 'return');
   const days = ret - depart + 1;
-  if (days > MAX_DAYS) return { ok: false, error: MESSAGES.tooLong };
+  if (days > MAX_DAYS) return bad(MESSAGES.tooLong, 'return');
 
   const range = availableRange(meta);
-  if (depart < range.min) {
-    return { ok: false, error: 'Rates for ' + monthYear(depart) + ' are no longer available.' };
-  }
+  if (depart < range.min) return bad('Rates for ' + monthYear(depart) + ' are no longer available.', 'depart');
   const fiscalYears = [];
   for (let day = depart; day <= ret; day++) {
     const fy = fiscalYearOf(day);
     if (range.years.indexOf(fy) === -1) {
-      return { ok: false, error: 'Rates for ' + monthYear(day) + ' aren’t published yet.' };
+      return bad('Rates for ' + monthYear(day) + ' aren’t published yet.', day === depart ? 'depart' : 'return');
     }
     if (fiscalYears.indexOf(fy) === -1) fiscalYears.push(fy);
   }
@@ -126,12 +129,14 @@ export function validateDates(departIso, returnIso, meta) {
 }
 
 // "Choose …" prompts are incomplete input, shown without the error style; the rest are errors.
-function prompt(text) {
-  return { ok: false, error: text, incomplete: true };
+// dest (0-based destination index, or null for the trip dates) and field ('depart' | 'return' |
+// 'arrive' | 'state' | 'location') say which field the message is about, so the page can mark it.
+function prompt(text, dest, field) {
+  return { ok: false, error: text, incomplete: true, dest: dest, field: field };
 }
 
-function fail(text) {
-  return { ok: false, error: text, incomplete: false };
+function fail(text, dest, field) {
+  return { ok: false, error: text, incomplete: false, dest: dest, field: field };
 }
 
 // trip: { departIso, returnIso, destinations: [{ state, location, arrive }] }, 1 to 5 in travel order.
@@ -146,7 +151,7 @@ export function validateTrip(trip, meta) {
     throw new Error('validateTrip: 1 to ' + MAX_DESTINATIONS + ' destinations required');
   }
   const v = validateDates(trip.departIso, trip.returnIso, meta);
-  if (!v.ok) return fail(v.error);
+  if (!v.ok) return fail(v.error, null, v.field);
   const sameDay = v.days === 1;
 
   // Same-day trips ignore Arrive on: every destination starts on the departure date.
@@ -156,13 +161,15 @@ export function validateTrip(trip, meta) {
     let start = v.depart;
     if (i > 0 && !sameDay) {
       start = parseISODate(dests[i].arrive);
-      if (start === null) return prompt(MESSAGES.destArrive(k));
-      if (start < v.depart || start > v.ret) return fail(MESSAGES.destOutside(k));
-      if (start < starts[i - 1]) return fail(MESSAGES.destOrder(k));
+      if (start === null) return prompt(MESSAGES.destArrive(k), i, 'arrive');
+      if (start < v.depart || start > v.ret) return fail(MESSAGES.destOutside(k), i, 'arrive');
+      if (start < starts[i - 1]) return fail(MESSAGES.destOrder(k), i, 'arrive');
     }
     starts.push(start);
-    if (!dests[i].state) return prompt(i === 0 ? MESSAGES.chooseState : MESSAGES.destState(k));
-    if (!dests[i].location) return prompt(i === 0 ? MESSAGES.chooseLocation : MESSAGES.destLocation(k));
+    if (!dests[i].state) return prompt(i === 0 ? MESSAGES.chooseState : MESSAGES.destState(k), i, 'state');
+    if (!dests[i].location) {
+      return prompt(i === 0 ? MESSAGES.chooseLocation : MESSAGES.destLocation(k), i, 'location');
+    }
   }
 
   const nights = [];
@@ -187,6 +194,37 @@ export function validateTrip(trip, meta) {
 
   return { ok: true, depart: v.depart, ret: v.ret, days: v.days, fiscalYears: v.fiscalYears,
     sameDay: sameDay, starts: starts, nights: nights, needed: needed };
+}
+
+// What each destination of an overnight trip covers, from the dates alone, so the form can show it
+// under each destination title while other fields are still empty (v1.1 spec §17). arrives[k] is
+// destination k's Arrive on (arrives[0] is ignored: destination 1 starts on the departure date).
+// Returns one entry per destination: { startIso, endIso, nights }, or null while its dates aren't
+// known or valid yet (a destination ends where the next one starts, or on the return date).
+// Same-day and invalid trips: all null.
+export function destinationSpans(departIso, returnIso, arrives) {
+  const depart = parseISODate(departIso);
+  const ret = parseISODate(returnIso);
+  const out = arrives.map(function () { return null; });
+  if (depart === null || ret === null || ret <= depart) return out;
+  const starts = [depart];
+  for (let i = 1; i < arrives.length; i++) {
+    const a = parseISODate(arrives[i]);
+    if (a === null || a < depart || a > ret || a < starts[i - 1]) break;
+    starts.push(a);
+  }
+  for (let i = 0; i < starts.length; i++) {
+    const end = i === arrives.length - 1 ? ret : starts[i + 1];
+    if (end === undefined) break;
+    out[i] = { startIso: toISODate(starts[i]), endIso: toISODate(end), nights: end - starts[i] };
+  }
+  return out;
+}
+
+// "12–14 Oct 2026 · 2 nights", "16 Oct 2026 · 0 nights"
+export function spanText(span) {
+  return formatDateRange(parseISODate(span.startIso), parseISODate(span.endIso)) + ' · ' + span.nights +
+    (span.nights === 1 ? ' night' : ' nights');
 }
 
 function byCity(a, b) {
@@ -271,9 +309,13 @@ export function calculateTrip(input) {
   const places = dests.map(function (d, i) {
     return placeName(d, i, input.files, fiscalYearOf(v.starts[i]));
   });
+  // A destination with no night: the date to fix is destination 2's for destination 1 (it can't be
+  // removed), else the destination's own Arrive on.
   if (!v.sameDay) {
     for (let i = 0; i < dests.length; i++) {
-      if (v.nights[i] === 0) return fail(MESSAGES.noNight(places[i]));
+      if (v.nights[i] === 0) {
+        return i === 0 ? fail(MESSAGES.noNightFirst(places[0]), 1, 'arrive') : fail(MESSAGES.noNight(places[i]), i, 'arrive');
+      }
     }
   }
 
@@ -285,7 +327,9 @@ export function calculateTrip(input) {
     return resolveRate(stateFile(input.files, fy, dests[k].state), dests[k].location);
   };
   const gap = function (k) {
-    return { ok: false, error: MESSAGES.rateGap(places[k]), incomplete: false, rateGap: true };
+    const r = fail(MESSAGES.rateGap(places[k]), k, 'location');
+    r.rateGap = true;
+    return r;
   };
   const addRow = function (day, k, rate, edge, lodging) {
     const mie = edge ? rate.mie * 0.75 : rate.mie;
@@ -352,7 +396,7 @@ export function calculate(input) {
   const r = calculateTrip({ departIso: input.departIso, returnIso: input.returnIso, over12: true,
     meta: input.meta, files: files,
     destinations: [{ state: 'XX', location: input.location, arrive: null, stateName: input.stateName }] });
-  if (!r.ok) return r.rateGap ? fail(MESSAGES.locationGap) : r;
+  if (!r.ok) return r.rateGap ? fail(MESSAGES.locationGap, 0, 'location') : r;
   const named = r.rows.some(function (row) { return !row.standard; });
   r.city = input.location !== 'std' && named ? r.destinations[0].place : null;
   return r;

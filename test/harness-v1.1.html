@@ -26,7 +26,16 @@
   .perdiem-calc_dest { position: relative; min-width: 0; border: 0; border-top: 1px solid #ccc; margin: 16px 0 0; padding: 12px 0 0; }
   .perdiem-calc_dest-remove { position: absolute; top: 12px; right: 0; }
   .perdiem-calc_field.is-arrive { grid-column: 1 / -1; max-width: calc(50% - 6px); }
-  .perdiem-calc_over12, .perdiem-calc_add-wrap { margin: 12px 0; }
+  .perdiem-calc_over12 { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+  .perdiem-calc_add-wrap { margin: 12px 0; }
+  /* v1.1 §17: each destination's dates or its error, the field an error is about, the breakdown */
+  .perdiem-calc_dest-status { margin: -4px 0 8px; font-size: 0.875em; color: #555; }
+  .perdiem-calc_dest-status.is-first { grid-column: 1 / -1; margin: -8px 0 0; }
+  .perdiem-calc_dest-status.is-error { color: #b00020; font-weight: 600; }
+  [aria-invalid="true"] { border-color: #b00020; outline: 2px solid #b00020; }
+  .perdiem-calc_breakdown-list { padding-left: 1.25em; }
+  .perdiem-calc_breakdown-item span + span { margin-left: 0.75em; }
+  .perdiem-calc_breakdown-dates { color: #555; }
   @media (max-width: 479px) { .perdiem-calc_field.is-arrive { max-width: none; } }
   .harness { border-top: 1px solid #ccc; margin-top: 32px; font-size: 14px; }
   .harness pre { background: #f4f4f4; padding: 8px; min-height: 3em; white-space: pre-wrap; }

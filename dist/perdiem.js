@@ -39,6 +39,10 @@ const MESSAGES = {
   noNight: function (place) {
     return 'No night in ' + place + '? Remove it: per diem follows where you sleep each night.';
   },
+  // Destination 1 can't be removed, so point at the date that leaves it without a night.
+  noNightFirst: function (place) {
+    return 'No night in ' + place + '? Check destination 2’s date: per diem follows where you sleep each night.';
+  },
   rateGap: function (place) { return 'Rates for ' + place + ' aren’t available for all of your dates.'; }
 };
 
@@ -106,24 +110,23 @@ function monthYear(day) {
 }
 
 // Both dates must already be present. Returns { ok, depart, ret, days, fiscalYears } or
-// { ok: false, error }.
+// { ok: false, error, field }: field is the date to fix, 'depart' or 'return'.
 function validateDates(departIso, returnIso, meta) {
   const depart = parseISODate(departIso);
   const ret = parseISODate(returnIso);
-  if (depart === null || ret === null) return { ok: false, error: 'Enter dates as YYYY-MM-DD.' };
-  if (ret < depart) return { ok: false, error: MESSAGES.returnBeforeDepart };
+  const bad = function (error, field) { return { ok: false, error: error, field: field }; };
+  if (depart === null || ret === null) return bad('Enter dates as YYYY-MM-DD.', depart === null ? 'depart' : 'return');
+  if (ret < depart) return bad(MESSAGES.returnBeforeDepart, 'return');
   const days = ret - depart + 1;
-  if (days > MAX_DAYS) return { ok: false, error: MESSAGES.tooLong };
+  if (days > MAX_DAYS) return bad(MESSAGES.tooLong, 'return');
 
   const range = availableRange(meta);
-  if (depart < range.min) {
-    return { ok: false, error: 'Rates for ' + monthYear(depart) + ' are no longer available.' };
-  }
+  if (depart < range.min) return bad('Rates for ' + monthYear(depart) + ' are no longer available.', 'depart');
   const fiscalYears = [];
   for (let day = depart; day <= ret; day++) {
     const fy = fiscalYearOf(day);
     if (range.years.indexOf(fy) === -1) {
-      return { ok: false, error: 'Rates for ' + monthYear(day) + ' aren’t published yet.' };
+      return bad('Rates for ' + monthYear(day) + ' aren’t published yet.', day === depart ? 'depart' : 'return');
     }
     if (fiscalYears.indexOf(fy) === -1) fiscalYears.push(fy);
   }
@@ -131,12 +134,14 @@ function validateDates(departIso, returnIso, meta) {
 }
 
 // "Choose …" prompts are incomplete input, shown without the error style; the rest are errors.
-function prompt(text) {
-  return { ok: false, error: text, incomplete: true };
+// dest (0-based destination index, or null for the trip dates) and field ('depart' | 'return' |
+// 'arrive' | 'state' | 'location') say which field the message is about, so the page can mark it.
+function prompt(text, dest, field) {
+  return { ok: false, error: text, incomplete: true, dest: dest, field: field };
 }
 
-function fail(text) {
-  return { ok: false, error: text, incomplete: false };
+function fail(text, dest, field) {
+  return { ok: false, error: text, incomplete: false, dest: dest, field: field };
 }
 
 // trip: { departIso, returnIso, destinations: [{ state, location, arrive }] }, 1 to 5 in travel order.
@@ -151,7 +156,7 @@ function validateTrip(trip, meta) {
     throw new Error('validateTrip: 1 to ' + MAX_DESTINATIONS + ' destinations required');
   }
   const v = validateDates(trip.departIso, trip.returnIso, meta);
-  if (!v.ok) return fail(v.error);
+  if (!v.ok) return fail(v.error, null, v.field);
   const sameDay = v.days === 1;
 
   // Same-day trips ignore Arrive on: every destination starts on the departure date.
@@ -161,13 +166,15 @@ function validateTrip(trip, meta) {
     let start = v.depart;
     if (i > 0 && !sameDay) {
       start = parseISODate(dests[i].arrive);
-      if (start === null) return prompt(MESSAGES.destArrive(k));
-      if (start < v.depart || start > v.ret) return fail(MESSAGES.destOutside(k));
-      if (start < starts[i - 1]) return fail(MESSAGES.destOrder(k));
+      if (start === null) return prompt(MESSAGES.destArrive(k), i, 'arrive');
+      if (start < v.depart || start > v.ret) return fail(MESSAGES.destOutside(k), i, 'arrive');
+      if (start < starts[i - 1]) return fail(MESSAGES.destOrder(k), i, 'arrive');
     }
     starts.push(start);
-    if (!dests[i].state) return prompt(i === 0 ? MESSAGES.chooseState : MESSAGES.destState(k));
-    if (!dests[i].location) return prompt(i === 0 ? MESSAGES.chooseLocation : MESSAGES.destLocation(k));
+    if (!dests[i].state) return prompt(i === 0 ? MESSAGES.chooseState : MESSAGES.destState(k), i, 'state');
+    if (!dests[i].location) {
+      return prompt(i === 0 ? MESSAGES.chooseLocation : MESSAGES.destLocation(k), i, 'location');
+    }
   }
 
   const nights = [];
@@ -192,6 +199,37 @@ function validateTrip(trip, meta) {
 
   return { ok: true, depart: v.depart, ret: v.ret, days: v.days, fiscalYears: v.fiscalYears,
     sameDay: sameDay, starts: starts, nights: nights, needed: needed };
+}
+
+// What each destination of an overnight trip covers, from the dates alone, so the form can show it
+// under each destination title while other fields are still empty (v1.1 spec §17). arrives[k] is
+// destination k's Arrive on (arrives[0] is ignored: destination 1 starts on the departure date).
+// Returns one entry per destination: { startIso, endIso, nights }, or null while its dates aren't
+// known or valid yet (a destination ends where the next one starts, or on the return date).
+// Same-day and invalid trips: all null.
+function destinationSpans(departIso, returnIso, arrives) {
+  const depart = parseISODate(departIso);
+  const ret = parseISODate(returnIso);
+  const out = arrives.map(function () { return null; });
+  if (depart === null || ret === null || ret <= depart) return out;
+  const starts = [depart];
+  for (let i = 1; i < arrives.length; i++) {
+    const a = parseISODate(arrives[i]);
+    if (a === null || a < depart || a > ret || a < starts[i - 1]) break;
+    starts.push(a);
+  }
+  for (let i = 0; i < starts.length; i++) {
+    const end = i === arrives.length - 1 ? ret : starts[i + 1];
+    if (end === undefined) break;
+    out[i] = { startIso: toISODate(starts[i]), endIso: toISODate(end), nights: end - starts[i] };
+  }
+  return out;
+}
+
+// "12–14 Oct 2026 · 2 nights", "16 Oct 2026 · 0 nights"
+function spanText(span) {
+  return formatDateRange(parseISODate(span.startIso), parseISODate(span.endIso)) + ' · ' + span.nights +
+    (span.nights === 1 ? ' night' : ' nights');
 }
 
 function byCity(a, b) {
@@ -276,9 +314,13 @@ function calculateTrip(input) {
   const places = dests.map(function (d, i) {
     return placeName(d, i, input.files, fiscalYearOf(v.starts[i]));
   });
+  // A destination with no night: the date to fix is destination 2's for destination 1 (it can't be
+  // removed), else the destination's own Arrive on.
   if (!v.sameDay) {
     for (let i = 0; i < dests.length; i++) {
-      if (v.nights[i] === 0) return fail(MESSAGES.noNight(places[i]));
+      if (v.nights[i] === 0) {
+        return i === 0 ? fail(MESSAGES.noNightFirst(places[0]), 1, 'arrive') : fail(MESSAGES.noNight(places[i]), i, 'arrive');
+      }
     }
   }
 
@@ -290,7 +332,9 @@ function calculateTrip(input) {
     return resolveRate(stateFile(input.files, fy, dests[k].state), dests[k].location);
   };
   const gap = function (k) {
-    return { ok: false, error: MESSAGES.rateGap(places[k]), incomplete: false, rateGap: true };
+    const r = fail(MESSAGES.rateGap(places[k]), k, 'location');
+    r.rateGap = true;
+    return r;
   };
   const addRow = function (day, k, rate, edge, lodging) {
     const mie = edge ? rate.mie * 0.75 : rate.mie;
@@ -357,7 +401,7 @@ function calculate(input) {
   const r = calculateTrip({ departIso: input.departIso, returnIso: input.returnIso, over12: true,
     meta: input.meta, files: files,
     destinations: [{ state: 'XX', location: input.location, arrive: null, stateName: input.stateName }] });
-  if (!r.ok) return r.rateGap ? fail(MESSAGES.locationGap) : r;
+  if (!r.ok) return r.rateGap ? fail(MESSAGES.locationGap, 0, 'location') : r;
   const named = r.rows.some(function (row) { return !row.standard; });
   r.city = input.location !== 'std' && named ? r.destinations[0].place : null;
   return r;
@@ -492,7 +536,7 @@ function buildCsv(result, departIso, returnIso, todayIso) {
 // DOM wiring for the per diem calculator. Spec: docs/phase-4-calculator.md, extended by
 // docs/v1.1.0-multi-city.md (multi-city rows, same-day switch).
 // Adds behaviour to the existing Webflow markup (data-pd hooks) — never adds layout or styles, apart
-// from cloning the v1.1 destination template (spec §7).
+// from cloning the v1.1 templates: destination rows and result breakdown lines (spec §7, §17).
 // Only runs as part of dist/perdiem.js: scripts/build-js.js drops the import below and inlines
 // calc-core.js into the same IIFE. Keep syntax at ES2019 or older.
 
@@ -505,10 +549,13 @@ const HOOKS = ['depart', 'return', 'state', 'location', 'message', 'export', 'da
 // v1.1 hooks, all optional (spec §7). Without dest-list, dest-template and add the calculator keeps one
 // destination, as v1.0.1; without over12 a same-day trip pays the 75% day.
 const V11_HOOKS = { over12: 'over12', over12Wrap: 'over12-wrap', title1: 'dest1-title', list: 'dest-list',
-  tpl: 'dest-template', addWrap: 'add-wrap', add: 'add', addNote: 'add-note' };
-// data-pd-dest hooks inside one template row.
+  tpl: 'dest-template', addWrap: 'add-wrap', add: 'add', addNote: 'add-note', status1: 'dest1-status',
+  breakdown: 'breakdown', breakdownList: 'breakdown-list', breakdownTpl: 'breakdown-template' };
+// data-pd-dest hooks inside one template row ("status" is optional: the row's dates or its error).
 const ROW_HOOKS = { title: 'title', remove: 'remove', arriveField: 'arrive-field', arrive: 'arrive',
   state: 'state', location: 'location' };
+// data-pd-item hooks inside one result breakdown line.
+const ITEM_HOOKS = ['place', 'dates', 'amount'];
 const LOAD_ERROR = 'Rates couldn’t load. Please try again.';
 
 // Repo root at the same tag as this script: …/itilite-per-diem@v1.0.0/dist/perdiem.min.js → …@v1.0.0/
@@ -564,6 +611,7 @@ function rowHooks(row) {
     x[names[i]] = row.querySelector('[data-pd-dest="' + ROW_HOOKS[names[i]] + '"]');
     if (!x[names[i]]) return null;
   }
+  x.status = row.querySelector('[data-pd-dest="status"]');
   return x;
 }
 
@@ -594,9 +642,15 @@ function init(root) {
       'running with one destination');
   }
 
+  // Per-destination breakdown in the result: its list and a line template with every item hook.
+  const line = e.breakdown && e.breakdownList && e.breakdownTpl && e.breakdownTpl.content &&
+    e.breakdownTpl.content.firstElementChild;
+  const items = line && ITEM_HOOKS.every((n) => line.querySelector('[data-pd-item="' + n + '"]'));
+
   const pre = (root.getAttribute('data-state') || '').trim().toUpperCase();
   const c = {
-    e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null,
+    e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null, err: null,
+    line: items ? line : null,
     dests: [newDest({ state: e.state, location: e.location, arrive: null })], result: null, timer: 0, fired: {}
   };
   if (pre && Array.prototype.some.call(e.state.options, (o) => o.value === pre)) e.state.value = pre;
@@ -695,6 +749,11 @@ function layout(c) {
       el.id = 'pd-dest-' + k + '-' + name;
       if (label) label.htmlFor = el.id;
     });
+    // Screen readers hear the row's dates (or its error) with its Arrive on field.
+    if (x.status) {
+      x.status.id = 'pd-dest-' + k + '-status';
+      x.arrive.setAttribute('aria-describedby', x.status.id);
+    }
   });
   if (e.title1) e.title1.hidden = n < 2;
   e.add.disabled = n >= MAX_DESTINATIONS;
@@ -755,6 +814,43 @@ function sync(c) {
     const a = parseISODate(x.arrive.value);
     if (a !== null) prev = a;
   });
+  renderStatus(c);
+}
+
+// The line under each destination title (2+ destinations): the error about that destination, else
+// the dates and nights it covers on an overnight trip, else nothing. The field an error is about
+// (any destination or the trip dates) gets aria-invalid, which the CSS shows in red.
+function renderStatus(c) {
+  const e = c.e;
+  const err = c.err;
+  const several = c.dests.length > 1;
+  const spans = several && !sameDay(c)
+    ? destinationSpans(e.depart.value, e.return.value, c.dests.map((x) => (x.arrive ? x.arrive.value : '')))
+    : [];
+  c.dests.forEach((x, i) => {
+    const el = i ? x.status : e.status1;
+    if (!el) return;
+    const own = several && err && err.dest === i;
+    const text = own ? err.error : spans[i] ? spanText(spans[i]) : '';
+    setText(el, text);
+    el.hidden = !text;
+    el.classList.toggle('is-error', !!own);
+  });
+  let target = null;
+  if (err && err.field) target = err.dest === null || err.dest === undefined ? e[err.field] : c.dests[err.dest][err.field];
+  const fields = [e.depart, e.return];
+  c.dests.forEach((x) => fields.push(x.arrive, x.state, x.location));
+  fields.forEach((f) => {
+    if (!f) return;
+    if (f === target) f.setAttribute('aria-invalid', 'true');
+    else f.removeAttribute('aria-invalid');
+  });
+}
+
+// Errors (not "Choose …" prompts) are marked on their destination and field.
+function setError(c, res) {
+  c.err = res && !res.ok && !res.incomplete ? res : null;
+  renderStatus(c);
 }
 
 // Location menu of destination x for state st, built from fiscal year fy (phase-4 rule 6). Rebuilding
@@ -802,6 +898,8 @@ function clearMenu(x) {
 function update(c) {
   const seq = ++c.seq;
   const current = () => seq === c.seq;
+  // Errors are re-checked on every change (compute marks them again if they remain).
+  c.err = null;
   sync(c);
   // A state is chosen (preselected on state pages, prefilled on new rows) but its menu isn't built yet.
   const pending = (x) => x.state.value && (!x.menuKey || x.menuKey.indexOf(x.state.value + '/') !== 0);
@@ -854,7 +952,10 @@ function compute(c, meta, current) {
       arrive: x.arrive ? x.arrive.value : null, stateName: stateName(x) }))
   };
   const v = validateTrip(trip, meta);
-  if (!v.ok) return showMessage(c, v.error, !v.incomplete);
+  if (!v.ok) {
+    setError(c, v);
+    return showMessage(c, v.error, !v.incomplete);
+  }
 
   // Exactly the state files the trip reads. Don't leave the previous result on screen while one loads.
   const urls = v.needed.map((p) => stateUrl(p[0], p[1]));
@@ -864,8 +965,11 @@ function compute(c, meta, current) {
     trip.files = {};
     v.needed.forEach((p, i) => { (trip.files[p[0]] = trip.files[p[0]] || {})[p[1]] = list[i]; });
     const res = calculateTrip(trip);
-    // One destination keeps the v1.0.1 wording.
-    if (!res.ok) return showMessage(c, res.rateGap && c.dests.length === 1 ? MESSAGES.locationGap : res.error, true);
+    if (!res.ok) {
+      setError(c, res);
+      // One destination keeps the v1.0.1 wording.
+      return showMessage(c, res.rateGap && c.dests.length === 1 ? MESSAGES.locationGap : res.error, true);
+    }
 
     setText(e.days, String(res.days));
     setText(e.total, formatMoney(res.total));
@@ -876,6 +980,7 @@ function compute(c, meta, current) {
     e.message.classList.remove('is-error');
     // A day trip of 12 hours or less is a valid $0 result, with nothing to export.
     e.export.disabled = res.tripType === 'day_short';
+    renderBreakdown(c, res);
     c.result = {
       key: [d, r, trip.over12].concat(trip.destinations.map((x) => [x.state, x.location, x.arrive].join('/')))
         .join('|'),
@@ -890,8 +995,29 @@ function clearResults(c) {
   setText(e.days, '0');
   ['total', 'lodging', 'meals', 'incidentals'].forEach((k) => setText(e[k], '$0'));
   e.export.disabled = true;
+  renderBreakdown(c, null);
   c.result = null;
   clearTimeout(c.timer);
+}
+
+// Result panel, overnight trips with 2+ destinations: one line per destination in travel order, with
+// its dates, nights and total, cloned from the breakdown template.
+function renderBreakdown(c, res) {
+  if (!c.line) return;
+  const list = c.e.breakdownList;
+  const show = !!res && res.tripType === 'overnight' && res.destinations.length > 1;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  if (show) {
+    res.destinations.forEach((d) => {
+      const li = document.importNode(c.line, true);
+      const item = (n) => li.querySelector('[data-pd-item="' + n + '"]');
+      item('place').textContent = d.place;
+      item('dates').textContent = spanText(d);
+      item('amount').textContent = formatMoney(d.total);
+      list.appendChild(li);
+    });
+  }
+  c.e.breakdown.hidden = !show;
 }
 
 function showMessage(c, text, isError) {

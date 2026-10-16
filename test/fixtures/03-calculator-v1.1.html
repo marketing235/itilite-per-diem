@@ -3,8 +3,10 @@
      The form is static until the calculator script loads; the script reads the hooks below.
      Hook contract (do not rename): data-perdiem-calc, data-state, data-pd = depart | return | state |
      location | message | export | days | total | lodging | meals | incidentals, and for multi-city
-     trips over12-wrap | over12 | dest1-title | dest-list | dest-template | add-wrap | add | add-note;
-     inside the template row, data-pd-dest = title | remove | arrive-field | arrive | state | location.
+     trips over12-wrap | over12 | dest1-title | dest1-status | dest-list | dest-template | add-wrap |
+     add | add-note | breakdown | breakdown-list | breakdown-template; inside the row template,
+     data-pd-dest = title | remove | status | arrive-field | arrive | state | location; inside the
+     breakdown template, data-pd-item = place | dates | amount.
      The multi-city parts stay hidden until a v1.1.0 or later script shows them. -->
 <section class="section_perdiem-calc" id="calculator">
   <div class="padding-global padding-section-medium">
@@ -26,7 +28,12 @@
               <label class="perdiem-calc_label" for="pd-return">Return date <span class="perdiem-calc_required" aria-hidden="true">*</span></label>
               <input class="perdiem-calc_input" id="pd-return" type="date" required data-pd="return">
             </div>
+            <div class="perdiem-calc_over12" data-pd="over12-wrap" hidden>
+              <input class="perdiem-calc_checkbox" type="checkbox" id="pd-over12" data-pd="over12" checked>
+              <label class="perdiem-calc_checkbox-label" for="pd-over12">I’m away for more than 12 hours</label>
+            </div>
             <p class="perdiem-calc_dest-title is-first" data-pd="dest1-title" hidden>Destination 1</p>
+            <p class="perdiem-calc_dest-status is-first" id="pd-dest1-status" data-pd="dest1-status" hidden></p>
             <div class="perdiem-calc_field">
               <label class="perdiem-calc_label" for="pd-state">State <span class="perdiem-calc_required" aria-hidden="true">*</span></label>
               <select class="perdiem-calc_select" id="pd-state" aria-required="true" data-pd="state">
@@ -89,17 +96,13 @@
               </select>
             </div>
           </div>
-          <div class="perdiem-calc_over12" data-pd="over12-wrap" hidden>
-            <input class="perdiem-calc_checkbox" type="checkbox" id="pd-over12" data-pd="over12" checked>
-            <label class="perdiem-calc_checkbox-label" for="pd-over12">I'm away for more than 12 hours</label>
-          </div>
-
           <div class="perdiem-calc_dest-list" data-pd="dest-list"></div>
 
           <template data-pd="dest-template">
             <fieldset class="perdiem-calc_dest">
               <legend class="perdiem-calc_dest-title" data-pd-dest="title">Destination 2</legend>
               <button type="button" class="perdiem-calc_dest-remove" data-pd-dest="remove">Remove</button>
+              <p class="perdiem-calc_dest-status" data-pd-dest="status" hidden></p>
               <div class="perdiem-calc_fields">
                 <div class="perdiem-calc_field is-arrive" data-pd-dest="arrive-field">
                   <label class="perdiem-calc_label">Arrive on <span class="perdiem-calc_required" aria-hidden="true">*</span></label>
@@ -142,6 +145,17 @@
             <div class="perdiem-calc_stat"><dt>Meals</dt><dd data-pd="meals">$0</dd></div>
             <div class="perdiem-calc_stat"><dt>Incidentals</dt><dd data-pd="incidentals">$0</dd></div>
           </dl>
+          <div class="perdiem-calc_breakdown" data-pd="breakdown" hidden>
+            <p class="perdiem-calc_breakdown-title">By destination</p>
+            <ol class="perdiem-calc_breakdown-list" data-pd="breakdown-list"></ol>
+            <template data-pd="breakdown-template">
+              <li class="perdiem-calc_breakdown-item">
+                <span class="perdiem-calc_breakdown-place" data-pd-item="place"></span>
+                <span class="perdiem-calc_breakdown-dates" data-pd-item="dates"></span>
+                <span class="perdiem-calc_breakdown-amount" data-pd-item="amount"></span>
+              </li>
+            </template>
+          </div>
           <p class="perdiem-calc_note">You receive 75% of the daily M&amp;IE rate on the first and last day of travel. Rates shown are the GSA maximums for your travel dates.</p>
         </div>
       </div>

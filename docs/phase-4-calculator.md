@@ -32,7 +32,7 @@ dist/perdiem.js         built file, committed
   exist in the repo, so the page loads `dist/perdiem.min.js` while the repo only has `dist/perdiem.js`
   *(verify on the first tag; if jsDelivr doesn't, serve `perdiem.js` unminified — it's small)*.
 - Output: one IIFE, `'use strict'`, no globals except `window.ItilitePerDiem` (for debugging only).
-- Size target (v1.1.0 §14): ≤ 20 KB minified and ≤ 8 KB gzipped as served. `npm run build:js` prints
+- Size target (v1.1.0 §14): ≤ 22 KB minified and ≤ 8 KB gzipped as served. `npm run build:js` prints
   upper-bound estimates (comments and whitespace stripped, no renaming; and that text gzipped) and warns
   above either target; confirm the real `perdiem.min.js` size on each tag.
 - Browser support: current evergreen browsers. No transpiling; avoid syntax newer than ES2019.

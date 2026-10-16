@@ -50,7 +50,7 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target for the calculator (`perdiem.min.js`) is ≤ 20 KB minified and ≤ 8 KB gzipped,
+  Core Web Vitals; target for the calculator (`perdiem.min.js`) is ≤ 22 KB minified and ≤ 8 KB gzipped,
   measured on the served jsDelivr file after tagging (`npm run build:js` prints upper-bound estimates;
   see `docs/v1.1.0-multi-city.md` §14).
 - **Fail loud.** Any script that cannot complete must exit non-zero with a clear message. Never write

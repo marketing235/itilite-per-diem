@@ -1,13 +1,14 @@
 // DOM wiring for the per diem calculator. Spec: docs/phase-4-calculator.md, extended by
 // docs/v1.1.0-multi-city.md (multi-city rows, same-day switch).
 // Adds behaviour to the existing Webflow markup (data-pd hooks) — never adds layout or styles, apart
-// from cloning the v1.1 destination template (spec §7).
+// from cloning the v1.1 templates: destination rows and result breakdown lines (spec §7, §17).
 // Only runs as part of dist/perdiem.js: scripts/build-js.js drops the import below and inlines
 // calc-core.js into the same IIFE. Keep syntax at ES2019 or older.
 
 import {
   parseISODate, toISODate, availableRange, menuFiscalYear, validateDates, validateTrip, buildLocationOptions,
-  calculate, calculateTrip, formatMoney, tripSummaryText, buildCsv, analyticsParams, MESSAGES, MAX_DESTINATIONS
+  calculate, calculateTrip, formatMoney, tripSummaryText, buildCsv, analyticsParams, destinationSpans, spanText,
+  MESSAGES, MAX_DESTINATIONS
 } from './calc-core.js';
 
 // Must be read while the script first executes; it is null inside later callbacks.
@@ -18,10 +19,13 @@ const HOOKS = ['depart', 'return', 'state', 'location', 'message', 'export', 'da
 // v1.1 hooks, all optional (spec §7). Without dest-list, dest-template and add the calculator keeps one
 // destination, as v1.0.1; without over12 a same-day trip pays the 75% day.
 const V11_HOOKS = { over12: 'over12', over12Wrap: 'over12-wrap', title1: 'dest1-title', list: 'dest-list',
-  tpl: 'dest-template', addWrap: 'add-wrap', add: 'add', addNote: 'add-note' };
-// data-pd-dest hooks inside one template row.
+  tpl: 'dest-template', addWrap: 'add-wrap', add: 'add', addNote: 'add-note', status1: 'dest1-status',
+  breakdown: 'breakdown', breakdownList: 'breakdown-list', breakdownTpl: 'breakdown-template' };
+// data-pd-dest hooks inside one template row ("status" is optional: the row's dates or its error).
 const ROW_HOOKS = { title: 'title', remove: 'remove', arriveField: 'arrive-field', arrive: 'arrive',
   state: 'state', location: 'location' };
+// data-pd-item hooks inside one result breakdown line.
+const ITEM_HOOKS = ['place', 'dates', 'amount'];
 const LOAD_ERROR = 'Rates couldn’t load. Please try again.';
 
 // Repo root at the same tag as this script: …/itilite-per-diem@v1.0.0/dist/perdiem.min.js → …@v1.0.0/
@@ -77,6 +81,7 @@ function rowHooks(row) {
     x[names[i]] = row.querySelector('[data-pd-dest="' + ROW_HOOKS[names[i]] + '"]');
     if (!x[names[i]]) return null;
   }
+  x.status = row.querySelector('[data-pd-dest="status"]');
   return x;
 }
 
@@ -107,9 +112,15 @@ function init(root) {
       'running with one destination');
   }
 
+  // Per-destination breakdown in the result: its list and a line template with every item hook.
+  const line = e.breakdown && e.breakdownList && e.breakdownTpl && e.breakdownTpl.content &&
+    e.breakdownTpl.content.firstElementChild;
+  const items = line && ITEM_HOOKS.every((n) => line.querySelector('[data-pd-item="' + n + '"]'));
+
   const pre = (root.getAttribute('data-state') || '').trim().toUpperCase();
   const c = {
-    e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null,
+    e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null, err: null,
+    line: items ? line : null,
     dests: [newDest({ state: e.state, location: e.location, arrive: null })], result: null, timer: 0, fired: {}
   };
   if (pre && Array.prototype.some.call(e.state.options, (o) => o.value === pre)) e.state.value = pre;
@@ -208,6 +219,11 @@ function layout(c) {
       el.id = 'pd-dest-' + k + '-' + name;
       if (label) label.htmlFor = el.id;
     });
+    // Screen readers hear the row's dates (or its error) with its Arrive on field.
+    if (x.status) {
+      x.status.id = 'pd-dest-' + k + '-status';
+      x.arrive.setAttribute('aria-describedby', x.status.id);
+    }
   });
   if (e.title1) e.title1.hidden = n < 2;
   e.add.disabled = n >= MAX_DESTINATIONS;
@@ -268,6 +284,43 @@ function sync(c) {
     const a = parseISODate(x.arrive.value);
     if (a !== null) prev = a;
   });
+  renderStatus(c);
+}
+
+// The line under each destination title (2+ destinations): the error about that destination, else
+// the dates and nights it covers on an overnight trip, else nothing. The field an error is about
+// (any destination or the trip dates) gets aria-invalid, which the CSS shows in red.
+function renderStatus(c) {
+  const e = c.e;
+  const err = c.err;
+  const several = c.dests.length > 1;
+  const spans = several && !sameDay(c)
+    ? destinationSpans(e.depart.value, e.return.value, c.dests.map((x) => (x.arrive ? x.arrive.value : '')))
+    : [];
+  c.dests.forEach((x, i) => {
+    const el = i ? x.status : e.status1;
+    if (!el) return;
+    const own = several && err && err.dest === i;
+    const text = own ? err.error : spans[i] ? spanText(spans[i]) : '';
+    setText(el, text);
+    el.hidden = !text;
+    el.classList.toggle('is-error', !!own);
+  });
+  let target = null;
+  if (err && err.field) target = err.dest === null || err.dest === undefined ? e[err.field] : c.dests[err.dest][err.field];
+  const fields = [e.depart, e.return];
+  c.dests.forEach((x) => fields.push(x.arrive, x.state, x.location));
+  fields.forEach((f) => {
+    if (!f) return;
+    if (f === target) f.setAttribute('aria-invalid', 'true');
+    else f.removeAttribute('aria-invalid');
+  });
+}
+
+// Errors (not "Choose …" prompts) are marked on their destination and field.
+function setError(c, res) {
+  c.err = res && !res.ok && !res.incomplete ? res : null;
+  renderStatus(c);
 }
 
 // Location menu of destination x for state st, built from fiscal year fy (phase-4 rule 6). Rebuilding
@@ -315,6 +368,8 @@ function clearMenu(x) {
 function update(c) {
   const seq = ++c.seq;
   const current = () => seq === c.seq;
+  // Errors are re-checked on every change (compute marks them again if they remain).
+  c.err = null;
   sync(c);
   // A state is chosen (preselected on state pages, prefilled on new rows) but its menu isn't built yet.
   const pending = (x) => x.state.value && (!x.menuKey || x.menuKey.indexOf(x.state.value + '/') !== 0);
@@ -367,7 +422,10 @@ function compute(c, meta, current) {
       arrive: x.arrive ? x.arrive.value : null, stateName: stateName(x) }))
   };
   const v = validateTrip(trip, meta);
-  if (!v.ok) return showMessage(c, v.error, !v.incomplete);
+  if (!v.ok) {
+    setError(c, v);
+    return showMessage(c, v.error, !v.incomplete);
+  }
 
   // Exactly the state files the trip reads. Don't leave the previous result on screen while one loads.
   const urls = v.needed.map((p) => stateUrl(p[0], p[1]));
@@ -377,8 +435,11 @@ function compute(c, meta, current) {
     trip.files = {};
     v.needed.forEach((p, i) => { (trip.files[p[0]] = trip.files[p[0]] || {})[p[1]] = list[i]; });
     const res = calculateTrip(trip);
-    // One destination keeps the v1.0.1 wording.
-    if (!res.ok) return showMessage(c, res.rateGap && c.dests.length === 1 ? MESSAGES.locationGap : res.error, true);
+    if (!res.ok) {
+      setError(c, res);
+      // One destination keeps the v1.0.1 wording.
+      return showMessage(c, res.rateGap && c.dests.length === 1 ? MESSAGES.locationGap : res.error, true);
+    }
 
     setText(e.days, String(res.days));
     setText(e.total, formatMoney(res.total));
@@ -389,6 +450,7 @@ function compute(c, meta, current) {
     e.message.classList.remove('is-error');
     // A day trip of 12 hours or less is a valid $0 result, with nothing to export.
     e.export.disabled = res.tripType === 'day_short';
+    renderBreakdown(c, res);
     c.result = {
       key: [d, r, trip.over12].concat(trip.destinations.map((x) => [x.state, x.location, x.arrive].join('/')))
         .join('|'),
@@ -403,8 +465,29 @@ function clearResults(c) {
   setText(e.days, '0');
   ['total', 'lodging', 'meals', 'incidentals'].forEach((k) => setText(e[k], '$0'));
   e.export.disabled = true;
+  renderBreakdown(c, null);
   c.result = null;
   clearTimeout(c.timer);
+}
+
+// Result panel, overnight trips with 2+ destinations: one line per destination in travel order, with
+// its dates, nights and total, cloned from the breakdown template.
+function renderBreakdown(c, res) {
+  if (!c.line) return;
+  const list = c.e.breakdownList;
+  const show = !!res && res.tripType === 'overnight' && res.destinations.length > 1;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  if (show) {
+    res.destinations.forEach((d) => {
+      const li = document.importNode(c.line, true);
+      const item = (n) => li.querySelector('[data-pd-item="' + n + '"]');
+      item('place').textContent = d.place;
+      item('dates').textContent = spanText(d);
+      item('amount').textContent = formatMoney(d.total);
+      list.appendChild(li);
+    });
+  }
+  c.e.breakdown.hidden = !show;
 }
 
 function showMessage(c, text, isError) {
