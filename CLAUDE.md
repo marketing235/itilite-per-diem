@@ -50,9 +50,11 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target for the calculator (`perdiem.min.js`) is ≤ 22 KB minified and ≤ 8 KB gzipped,
-  measured on the served jsDelivr file after tagging (`npm run build:js` prints upper-bound estimates;
-  see `docs/v1.1.0-multi-city.md` §14).
+  Core Web Vitals; target for the calculator (`perdiem.min.js`) from v1.2.0 is ≤ 28 KB minified and
+  ≤ 10 KB gzipped (raised 19 Oct 2026 from 22 KB / 8 KB; see `docs/v1.2.0-separate-trips.md` §11).
+  Measure for real with `npx terser dist/perdiem.js -c -m` plus gzip, and on the served jsDelivr file
+  after tagging. `npm run build:js` prints estimates that read about 30% high and always warn; that
+  warning is expected.
 - **Fail loud.** Any script that cannot complete must exit non-zero with a clear message. Never write
   partial data.
 - **Propose before building.** For anything not specified here, describe the approach and ask before
@@ -73,17 +75,22 @@ data/{fy}/{ST}.json           e.g. data/2027/CA.json
 cms/states.csv                Webflow CMS import file
 cms/tables/{fy}/{ST}.html     county-table HTML snippet per state (Webflow field type decided later)
 docs/phase-4-calculator.md    Phase 4 — calculator spec (locked)
+docs/v1.1.0-multi-city.md     v1.1.0 — multi-city spec, §1–17 (locked)
+docs/v1.2.0-separate-trips.md v1.2.0 — separate trips spec (locked)
 src/calc-core.js              Phase 4 — pure calculation functions, no DOM
 src/perdiem.js                Phase 4 — DOM wiring: hooks, data loading, render, export, analytics
 scripts/build-js.js           Phase 4 — zero-dependency build: wraps calc-core + perdiem into one IIFE
 test/calc-core.test.js        Phase 4 — golden tests against the committed data/ files
 test/fixtures/03-calculator.html  calculator markup as it appears in Webflow (hook contract)
 test/fixtures/03-calculator-v1.1.html  the same plus the v1.1 multi-city hooks (v1.1.0 spec §7)
+test/fixtures/03-calculator-v1.2.html  v1.1 fixture plus the v1.2 trip hooks (v1.2.0 spec §5; created in v1.2.0)
 scripts/serve.js              Phase 4 — local static server (node:http) with an HTML include swap
 test/harness.html             Phase 4 — local main-page harness (npm run serve)
 test/harness-state.html       Phase 4 — local state-page harness, data-state="CA"
 test/harness-v1.1.html        v1.1.0 — main-page harness on the v1.1 markup
 test/harness-v1.1-state.html  v1.1.0 — state-page harness on the v1.1 markup, data-state="NY"
+test/harness-v1.2.html        v1.2.0 — main-page harness on the v1.2 markup (created in v1.2.0)
+test/harness-v1.2-state.html  v1.2.0 — state-page harness on the v1.2 markup, data-state="NY" (created in v1.2.0)
 src/us-map.svg                Phase 5 — map source
 dist/perdiem.js               built output, committed; the page requests perdiem.min.js, which jsDelivr auto-minifies
 dist/us-map.svg
@@ -253,6 +260,15 @@ export, analytics, golden tests). It wins over anything here. In short:
    steps; display cents only when the amount isn't a whole dollar (`$788`, `$55.50`).
 
 v1.1.0 (multi-city trips, same-day rules) is specified in docs/v1.1.0-multi-city.md, which extends docs/phase-4-calculator.md.
+v1.2.0 (separate trips: up to 5 trips, each a full v1.1 trip with its own 75% first and last day;
+overlapping or touching trips are an error) is specified in docs/v1.2.0-separate-trips.md, which
+extends docs/v1.1.0-multi-city.md. Where documents disagree, the newer spec wins:
+v1.2.0 → v1.1.0 → phase-4 → this file.
+
+**Releases (19 Oct 2026):** live on production `v1.0.1`. `v1.1.0` is the tested fallback and is
+never deployed to production on its own; production goes from `v1.0.1` straight to `v1.2.0`.
+`FALLBACK_BASE` in `src/perdiem.js` must equal the tag being released. jsDelivr caches tags
+permanently, so never re-tag a version: fix forward with the next patch tag.
 
 ## Safety rules for the pull script
 
@@ -279,8 +295,8 @@ v1.1.0 (multi-city trips, same-day rules) is specified in docs/v1.1.0-multi-city
 ## Annual refresh (Phase 8, for context)
 
 A GitHub Action on 20 August pulls the coming fiscal year, validates with the rules above, commits
-to a branch and opens a pull request. Nothing is merged automatically. After merge, a new exact
-semver tag is cut (e.g. `v1.1.0`) and the Webflow page's script URL is updated to pin it. Rates go live on 1 October regardless of
+to a branch and opens a pull request. Nothing is merged automatically. After merge, the next free exact
+semver tag is cut (e.g. `v1.2.1`) and the Webflow page's script URL is updated to pin it. Rates go live on 1 October regardless of
 when GSA publishes, because the calculator selects by travel date.
 
 ## Out of scope for this repo
