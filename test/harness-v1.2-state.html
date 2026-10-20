@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Per diem harness: New York, v1.2 markup</title>
+<!-- Local test page for npm run serve: a state page on the v1.2 markup. scripts/serve.js swaps in
+     test/fixtures/03-calculator-v1.2.html with data-state="NY" on its root, then the FY2027 New York
+     county table below it (the state pages carry that table, which the load-error message refers to).
+     harness-v1.1-state.html and harness-state.html keep the v1.1 and v1.0.1 markup for the
+     backward-compatibility checks. -->
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 16px; }
+  .perdiem-calc_fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .perdiem-calc_field { display: flex; flex-direction: column; gap: 4px; }
+  .perdiem-calc_input, .perdiem-calc_select { font: inherit; padding: 6px; }
+  .perdiem-calc_message { min-height: 1.5em; }
+  .perdiem-calc_message.is-error { color: #b00020; font-weight: 600; }
+  .perdiem-calc_stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .perdiem-calc_stat dd { margin: 0; font-size: 1.4em; font-weight: 600; }
+  .perdiem-calc_export-icon { vertical-align: middle; }
+  :focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+  /* v1.1 markup, as in the site CSS (spec §7): .perdiem-calc_field sets display:flex, which would
+     otherwise override the hidden attribute and leave Arrive on visible on same-day trips. */
+  .section_perdiem-calc [hidden] { display: none !important; }
+  .perdiem-calc_dest-title { font-weight: 600; margin: 0 0 8px; padding: 0; }
+  .perdiem-calc_dest-title.is-first { grid-column: 1 / -1; margin: 8px 0 0; }
+  .perdiem-calc_dest { position: relative; min-width: 0; border: 0; border-top: 1px solid #ccc; margin: 16px 0 0; padding: 12px 0 0; }
+  .perdiem-calc_dest-remove { position: absolute; top: 12px; right: 0; }
+  .perdiem-calc_field.is-arrive { grid-column: 1 / -1; max-width: calc(50% - 6px); }
+  .perdiem-calc_over12 { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+  .perdiem-calc_add-wrap { margin: 12px 0; }
+  /* v1.1 §17: each destination's dates or its error, the field an error is about, the breakdown */
+  .perdiem-calc_dest-status { margin: -4px 0 8px; font-size: 0.875em; color: #555; }
+  .perdiem-calc_dest-status.is-first { grid-column: 1 / -1; margin: -8px 0 0; }
+  .perdiem-calc_dest-status.is-error { color: #b00020; font-weight: 600; }
+  [aria-invalid="true"] { border-color: #b00020; outline: 2px solid #b00020; }
+  .perdiem-calc_breakdown-list { padding-left: 1.25em; }
+  .perdiem-calc_breakdown-item span + span { margin-left: 0.75em; }
+  .perdiem-calc_breakdown-dates { color: #555; }
+  @media (max-width: 479px) { .perdiem-calc_field.is-arrive { max-width: none; } }
+  /* v1.2 §5: trip blocks (a heavier top border than a destination's), trip titles and dates lines,
+     Add another trip, and the By trip lines */
+  .perdiem-calc_trip { position: relative; min-width: 0; border: 0; border-top: 3px solid #1b1b4d; margin: 24px 0 0; padding: 16px 0 0; }
+  .perdiem-calc_trip-title { font-weight: 700; font-size: 1.1em; margin: 0 0 8px; padding: 0; }
+  .perdiem-calc_trip-title.is-first { grid-column: 1 / -1; margin: 0; }
+  .perdiem-calc_trip-remove { position: absolute; top: 16px; right: 0; }
+  .perdiem-calc_trip-status { margin: -4px 0 8px; font-size: 0.875em; color: #555; }
+  .perdiem-calc_trip-status.is-first { grid-column: 1 / -1; margin: -8px 0 0; }
+  .perdiem-calc_trip-status.is-error { color: #b00020; font-weight: 600; }
+  .perdiem-calc_add.is-trip { font-weight: 700; }
+  .perdiem-calc_add-trip-wrap { margin: 16px 0; }
+  .perdiem-calc_breakdown-item.is-trip .perdiem-calc_breakdown-place { font-weight: 700; }
+  .perdiem-calc_breakdown-item.is-sub { margin-left: 1.25em; }
+  .perdiem_table { border-collapse: collapse; font-size: 14px; }
+  .perdiem_table th, .perdiem_table td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
+  .harness { border-top: 1px solid #ccc; margin-top: 32px; font-size: 14px; }
+  .harness pre { background: #f4f4f4; padding: 8px; min-height: 3em; white-space: pre-wrap; }
+</style>
+<script>
+  // Stand-in for the page's GA4 gtag: records events on this page instead of sending them.
+  window.gtag = function () {
+    var line = new Date().toTimeString().slice(0, 8) + '  ' + JSON.stringify(Array.prototype.slice.call(arguments));
+    console.log('[gtag]', line);
+    var log = document.getElementById('gtag-log');
+    if (log) log.textContent += line + '\n';
+  };
+</script>
+</head>
+<body>
+<!--#include file="fixtures/03-calculator-v1.2.html" data-state="NY" -->
+<section>
+  <h2>New York per diem rates by county (FY2027)</h2>
+  <!--#include file="../cms/tables/2027/NY.html" -->
+</section>
+<section class="harness">
+  <h2>gtag events (local stub)</h2>
+  <pre id="gtag-log"></pre>
+</section>
+<script src="/dist/perdiem.js" defer></script>
+</body>
+</html>

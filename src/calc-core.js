@@ -1,5 +1,6 @@
 // Pure per diem calculation functions: no DOM, no fetch. Spec: docs/phase-4-calculator.md, extended
-// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules).
+// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules) and docs/v1.2.0-separate-trips.md
+// (plans of separate trips).
 // Written as an ES module so node --test can import it; scripts/build-js.js strips the `export`
 // keywords and inlines this file into the dist/perdiem.js IIFE. Keep syntax at ES2019 or older.
 //
@@ -13,8 +14,10 @@ const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'S
 const MAX_DAYS = 365;
 
 export const MAX_DESTINATIONS = 5;
+export const MAX_TRIPS = 5;
 
-// k is the 1-based destination number; place is a placeName().
+// k is the 1-based destination number (in the trip messages: the trip number, and j the other trip's);
+// place is a placeName().
 export const MESSAGES = {
   returnBeforeDepart: 'Your return date is before your departure date.',
   tooLong: 'Trips can be up to ' + MAX_DAYS + ' days.',
@@ -38,7 +41,19 @@ export const MESSAGES = {
   noNightFirst: function (place) {
     return 'No night in ' + place + '? Check destination 2’s date: per diem follows where you sleep each night.';
   },
-  rateGap: function (place) { return 'Rates for ' + place + ' aren’t available for all of your dates.'; }
+  rateGap: function (place) { return 'Rates for ' + place + ' aren’t available for all of your dates.'; },
+  // Plans of 2+ trips (v1.2 spec §4): the trip's own date messages (which: 'departure' | 'return'), and
+  // the prefix for every other one.
+  tripDate: function (k, which) { return 'Choose the ' + which + ' date for trip ' + k + '.'; },
+  tripReturnBefore: function (k) { return 'Trip ' + k + '’s return date is before its departure date.'; },
+  inTrip: function (k, text) { return 'Trip ' + k + ': ' + text; },
+  tripOverlap: function (k, j) { return 'Trip ' + k + ' overlaps trip ' + j + '. Check the dates.'; },
+  // Two trips sharing one boundary day: trip k starts the day trip j ends (starts true), or ends the day
+  // trip j starts.
+  tripTouch: function (k, j, starts) {
+    return 'Trip ' + k + (starts ? ' starts the day trip ' + j + ' ends.' : ' ends the day trip ' + j + ' starts.') +
+      ' For one continuous trip, use Add another destination instead.';
+  }
 };
 
 // 'YYYY-MM-DD' → day number, or null if malformed or not a real date.
@@ -227,6 +242,18 @@ export function spanText(span) {
     (span.nights === 1 ? ' night' : ' nights');
 }
 
+// A trip's dates line (plans of 2+ trips, v1.2 spec §4), from the dates alone: "12–16 Oct 2026 · 5 days ·
+// 2 cities", "12 Oct 2026 · day trip"; '' while either date is missing or the return is first.
+// cities is the trip's number of destinations.
+export function tripDatesText(departIso, returnIso, cities) {
+  const d = parseISODate(departIso);
+  const r = parseISODate(returnIso);
+  if (d === null || r === null || r < d) return '';
+  const range = formatDateRange(d, r);
+  if (d === r) return range + ' · day trip';
+  return range + ' · ' + (r - d + 1) + ' days · ' + cities + (cities === 1 ? ' city' : ' cities');
+}
+
 function byCity(a, b) {
   return a.city < b.city ? -1 : a.city > b.city ? 1 : 0;
 }
@@ -402,6 +429,96 @@ export function calculate(input) {
   return r;
 }
 
+// ---- v1.2.0: plans of separate trips (docs/v1.2.0-separate-trips.md §2, §3) ----
+// plan: { meta, files, trips: [{ departIso, returnIso, over12, destinations }] }: 1 to 5 trips in the
+// order entered, each a calculateTrip input without its meta and files.
+
+// The [fy, ST] state files calculatePlan reads: each trip's, in entry order, up to the first trip that
+// fails a check needing no data file (that trip's message wins, so no later trip is calculated).
+export function planNeeded(plan, meta) {
+  const needed = [];
+  const seen = {};
+  for (let t = 0; t < plan.trips.length; t++) {
+    const v = validateTrip(plan.trips[t], meta);
+    if (!v.ok) break;
+    v.needed.forEach(function (p) {
+      const key = p[0] + '/' + p[1];
+      if (!seen[key]) {
+        seen[key] = true;
+        needed.push(p);
+      }
+    });
+  }
+  return needed;
+}
+
+// A failure is about trip t (0-based).
+function onTrip(res, t) {
+  res.trip = t;
+  return res;
+}
+
+// Overlap check (§3.3) over [depart, return] day numbers. Each trip is checked against every trip entered
+// before it, so the first clash found is the one highest on the form; the later trip in entry order is
+// marked, on its departure date. Two trips sharing only a boundary day get the message for that direction.
+function overlapError(spans) {
+  for (let k = 1; k < spans.length; k++) {
+    for (let j = 0; j < k; j++) {
+      const a = spans[k];
+      const b = spans[j];
+      if (a[0] <= b[1] && b[0] <= a[1]) {
+        const text = a[0] === b[1] || a[1] === b[0] ? MESSAGES.tripTouch(k + 1, j + 1, a[0] === b[1])
+          : MESSAGES.tripOverlap(k + 1, j + 1);
+        return onTrip(fail(text, null, 'depart'), k);
+      }
+    }
+  }
+  return null;
+}
+
+// Each trip is calculated on its own with calculateTrip (its own 75% first and last day; nothing carries
+// across trips); then no two trips may share a day. Checks run trip by trip in entry order, each in full
+// (v1.1 order), then the overlap check; the first failure wins. With 2+ trips every message names its
+// trip; a lone trip keeps the v1.1 wording, and its empty dates stay the page's to word.
+// files must hold planNeeded(plan, meta).
+// Returns { ok: false, error, incomplete, trip, dest, field } or { ok: true, trips[], days, lodging, mie,
+// meals, incidentals, total, rows[] }: trips are the calculateTrip results in entry order, each with its
+// departIso and returnIso; the plan totals are their exact sums; rows are theirs in order, each with trip.
+export function calculatePlan(plan) {
+  const trips = plan.trips;
+  if (!trips || trips.length < 1 || trips.length > MAX_TRIPS) {
+    throw new Error('calculatePlan: 1 to ' + MAX_TRIPS + ' trips required');
+  }
+  const several = trips.length > 1;
+  const out = { ok: true, trips: [], days: 0, lodging: 0, mie: 0, meals: 0, incidentals: 0, total: 0, rows: [] };
+  const spans = [];
+  for (let t = 0; t < trips.length; t++) {
+    const trip = trips[t];
+    if (several && !trip.departIso) return onTrip(prompt(MESSAGES.tripDate(t + 1, 'departure'), null, 'depart'), t);
+    if (several && !trip.returnIso) return onTrip(prompt(MESSAGES.tripDate(t + 1, 'return'), null, 'return'), t);
+    const r = calculateTrip({ departIso: trip.departIso, returnIso: trip.returnIso, over12: trip.over12,
+      meta: plan.meta, files: plan.files, destinations: trip.destinations });
+    if (!r.ok) {
+      if (several) {
+        r.error = r.error === MESSAGES.returnBeforeDepart ? MESSAGES.tripReturnBefore(t + 1)
+          : MESSAGES.inTrip(t + 1, r.error);
+      }
+      return onTrip(r, t);
+    }
+    r.departIso = trip.departIso;
+    r.returnIso = trip.returnIso;
+    out.trips.push(r);
+    spans.push([parseISODate(trip.departIso), parseISODate(trip.returnIso)]);
+  }
+  const clash = overlapError(spans);
+  if (clash) return clash;
+  out.trips.forEach(function (r, t) {
+    ['days', 'lodging', 'mie', 'meals', 'incidentals', 'total'].forEach(function (k) { out[k] += r[k]; });
+    r.rows.forEach(function (row) { out.rows.push(Object.assign({ trip: t }, row)); });
+  });
+  return out;
+}
+
 // GA4 location_type: 'mixed' when a trip has both standard-rate and city destinations.
 export function locationType(destinations) {
   let std = false;
@@ -445,20 +562,77 @@ export function summaryText(result, place, departIso, returnIso, note) {
     'Total allowance ' + formatMoney(result.total) + '.';
 }
 
-// Summary for a calculateTrip result: places in travel order ("A", "A and B", "A, B and C"). A
-// same-day trip to several places names the one whose rate applies. day_short gives its notice.
+// A trip's places in travel order: "A", "A and B", "A, B and C".
+function placeList(result) {
+  const places = result.destinations.map(function (d) { return d.place; });
+  return places.length === 1 ? places[0] : places.slice(0, -1).join(', ') + ' and ' + places[places.length - 1];
+}
+
+// Summary for a calculateTrip result: its places in travel order. A same-day trip to several places
+// names the one whose rate applies. day_short gives its notice.
 export function tripSummaryText(result, departIso, returnIso) {
   if (result.notice) return result.notice;
-  const places = result.destinations.map(function (d) { return d.place; });
-  const list = places.length === 1 ? places[0]
-    : places.slice(0, -1).join(', ') + ' and ' + places[places.length - 1];
   let note = '';
-  if (result.rateUsed !== null && places.length > 1) {
+  if (result.rateUsed !== null && result.destinations.length > 1) {
     const used = result.destinations[result.rateUsed];
     note = (used.location === 'std' ? 'The ' + used.stateName + ' standard rate' : used.place + '’s rate') +
       ' applies (the highest).';
   }
-  return summaryText(result, list, departIso, returnIso, note);
+  return summaryText(result, placeList(result), departIso, returnIso, note);
+}
+
+function tripRange(r) {
+  return formatDateRange(parseISODate(r.departIso), parseISODate(r.returnIso));
+}
+
+// Earliest departure and latest return across a plan's trips, as ISO dates.
+function planSpan(plan) {
+  let first = null;
+  let last = null;
+  plan.trips.forEach(function (r) {
+    if (first === null || r.departIso < first) first = r.departIso;
+    if (last === null || r.returnIso > last) last = r.returnIso;
+  });
+  return [first, last];
+}
+
+// Every trip is a day trip of 12 hours or less: the plan is valid, at $0, with nothing to export.
+export function allShort(plan) {
+  return plan.trips.every(function (r) { return r.tripType === 'day_short'; });
+}
+
+// Summary for a calculatePlan result with 2+ trips (v1.2 spec §4). Two trips: each named by its first
+// destination (plus "and {n} more" for several) with its dates; three or more: the overall dates. A plan
+// of day trips of 12 hours or less only gives their notice, as one such trip does.
+export function planSummaryText(plan) {
+  if (allShort(plan)) return MESSAGES.dayShort;
+  const span = planSpan(plan);
+  const which = plan.trips.length === 2 ? ': ' + plan.trips.map(function (r) {
+    const more = r.destinations.length - 1;
+    return r.destinations[0].place + (more ? ' and ' + more + ' more' : '') + ' (' + tripRange(r) + ')';
+  }).join(' and ') : ', ' + formatDateRange(parseISODate(span[0]), parseISODate(span[1]));
+  return plan.trips.length + ' trips, ' + plan.days + ' days' + which + '. Total allowance ' +
+    formatMoney(plan.total) + '.';
+}
+
+// Result breakdown lines { place, dates, amount, sub } (v1.1 §17, v1.2 §4). A calculateTrip result: one
+// per destination of an overnight trip with 2+ destinations, else none. A calculatePlan result: one per
+// trip in entry order ("Trip 1: New York City and Pittsburgh", its dates line, its total), each followed
+// by its own destination lines (sub). The lines that aren't sub add up to the total.
+export function breakdownLines(res) {
+  const dests = function (r, sub) {
+    return r.tripType === 'overnight' && r.destinations.length > 1 ? r.destinations.map(function (d) {
+      return { place: d.place, dates: spanText(d), amount: d.total, sub: sub };
+    }) : [];
+  };
+  if (!res.trips) return dests(res, false);
+  let lines = [];
+  res.trips.forEach(function (r, t) {
+    lines.push({ place: 'Trip ' + (t + 1) + ': ' + placeList(r), amount: r.total, sub: false,
+      dates: tripDatesText(r.departIso, r.returnIso, r.destinations.length) });
+    lines = lines.concat(dests(r, true));
+  });
+  return lines;
 }
 
 // GA4 params for perdiem_calculate and perdiem_export (v1.1 spec §9): codes and counts only, never
@@ -466,6 +640,20 @@ export function tripSummaryText(result, departIso, returnIso) {
 export function analyticsParams(result) {
   return { state: result.destinations[0].state, location_type: locationType(result.destinations),
     days: result.days, destinations: result.destinations.length, trip_type: result.tripType };
+}
+
+// The same for a plan (v1.2 spec §7), across every destination of every trip, plus trips (1 to 5).
+// plan: a calculatePlan result, or { trips: [calculateTrip result], days } for one trip.
+export function planAnalyticsParams(plan) {
+  let dests = [];
+  let type = null;
+  plan.trips.forEach(function (r) {
+    dests = dests.concat(r.destinations);
+    type = type === null || type === r.tripType ? r.tripType : 'mixed';
+  });
+  const p = analyticsParams({ destinations: dests, days: plan.days, tripType: type });
+  p.trips = plan.trips.length;
+  return p;
 }
 
 // Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
@@ -485,31 +673,31 @@ function csvPlace(d) {
   return (d.location === 'std' ? 'Standard rate' : d.place) + ', ' + d.stateName;
 }
 
-// CSV export of a calculateTrip result (phase-4 spec "Export", v1.1 spec §8). todayIso is the
-// Generated date. Each day row names the destination it belongs to; an overnight trip with 2+
-// destinations gets a subtotal row after each destination's last day. A same-day trip to several
-// places adds the rate-used line instead (it has one day row, so no subtotals).
-// Returns { filename, text }: text starts with the UTF-8 BOM and ends every line with CRLF.
-export function buildCsv(result, departIso, returnIso, todayIso) {
+const CSV_SOURCE = ['Source: U.S. General Services Administration per diem rates'];
+const CSV_COLUMNS = ['Date', 'Fiscal year', 'Location', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)',
+  'Day total (USD)'];
+
+// A trip's destinations with their dates: "New York City, New York (12–14 Oct 2026); Pittsburgh, …".
+function csvPlaces(result) {
+  return result.destinations.map(function (d) {
+    return csvPlace(d) + ' (' + formatDateRange(parseISODate(d.startIso), parseISODate(d.endIso)) + ')';
+  }).join('; ');
+}
+
+// A same-day trip to several places names the place whose rate it pays; any other trip: null.
+function csvRateUsed(result) {
+  if (result.destinations.length < 2 || result.rateUsed === null) return null;
+  const used = result.destinations[result.rateUsed];
+  return 'Same-day trip, away more than 12 hours. Rate used: ' +
+    (used.location === 'std' ? used.stateName + ' standard rate' : used.place) + ' (the highest of your stops).';
+}
+
+// A trip's day rows, each naming the destination it belongs to; on an overnight trip with 2+
+// destinations, a subtotal row after each destination's last day.
+function csvDays(result, lines) {
   const n = csvNumber;
   const dests = result.destinations;
-  const multi = dests.length > 1;
-  const today = parseISODate(todayIso);
-  const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + dests.map(function (d) {
-    return csvPlace(d) + ' (' + formatDateRange(parseISODate(d.startIso), parseISODate(d.endIso)) + ')';
-  }).join('; ') : csvPlace(dests[0])]];
-  if (multi && result.rateUsed !== null) {
-    const used = dests[result.rateUsed];
-    lines.push(['Same-day trip, away more than 12 hours. Rate used: ' +
-      (used.location === 'std' ? used.stateName + ' standard rate' : used.place) + ' (the highest of your stops).']);
-  }
-  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
-    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
-  ['Source: U.S. General Services Administration per diem rates'],
-  ['Generated ' + formatDateRange(today, today)],
-  [],
-  ['Date', 'Fiscal year', 'Location', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Day total (USD)']);
-  const subtotals = multi && result.tripType === 'overnight';
+  const subtotals = dests.length > 1 && result.tripType === 'overnight';
   result.rows.forEach(function (row, i) {
     lines.push([row.date, 'FY' + row.fiscalYear, csvPlace(dests[row.destination]),
       i < result.nights ? n(row.lodging) : '', n(row.meals), n(row.incidentals), n(row.total)]);
@@ -519,10 +707,68 @@ export function buildCsv(result, departIso, returnIso, todayIso) {
       lines.push(['Subtotal: ' + d.place, '', '', n(d.lodging), n(d.meals), n(d.incidentals), n(d.total)]);
     }
   });
-  lines.push(['Total', '', '', n(result.lodging), n(result.meals), n(result.incidentals), n(result.total)]);
+}
+
+function csvTotal(label, r) {
+  const n = csvNumber;
+  return [label, '', '', n(r.lodging), n(r.meals), n(r.incidentals), n(r.total)];
+}
+
+// UTF-8 BOM, every cell quoted, CRLF after every line.
+function csvText(lines) {
+  return '﻿' + lines.map(function (cells) { return cells.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+}
+
+// CSV export of a calculateTrip result (phase-4 spec "Export", v1.1 spec §8). todayIso is the
+// Generated date. Each day row names the destination it belongs to; an overnight trip with 2+
+// destinations gets a subtotal row after each destination's last day. A same-day trip to several
+// places adds the rate-used line instead (it has one day row, so no subtotals).
+// Returns { filename, text }: text starts with the UTF-8 BOM and ends every line with CRLF.
+export function buildCsv(result, departIso, returnIso, todayIso) {
+  const dests = result.destinations;
+  const multi = dests.length > 1;
+  const today = parseISODate(todayIso);
+  const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + csvPlaces(result) : csvPlace(dests[0])]];
+  const rateUsed = csvRateUsed(result);
+  if (rateUsed) lines.push([rateUsed]);
+  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
+    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
+  CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
+  csvDays(result, lines);
+  lines.push(csvTotal('Total', result));
   return {
     filename: 'per-diem-' + (multi ? 'multi-city' : dests[0].state.toLowerCase()) + '-' + departIso + '-to-' +
       returnIso + '.csv',
-    text: '﻿' + lines.map(function (cells) { return cells.map(csvCell).join(','); }).join('\r\n') + '\r\n'
+    text: csvText(lines)
   };
+}
+
+// CSV export of a calculatePlan result with 2+ trips (v1.2 spec §6). Header: the number of trips, then
+// one line per trip with its destinations and dates (and a same-day trip's rate-used line). Rows: per
+// trip in entry order, a "Trip k" title row, its day rows (with destination subtotals) and a
+// "Subtotal: Trip k" row; then the Total. A day trip of 12 hours or less has one zero row with the note
+// in its Location cell. Same cells, quoting, BOM and CRLF as buildCsv.
+export function buildPlanCsv(plan, todayIso) {
+  const today = parseISODate(todayIso);
+  const span = planSpan(plan);
+  const lines = [['ITILITE per diem estimate'], ['Trips: ' + plan.trips.length]];
+  plan.trips.forEach(function (r, t) {
+    lines.push(['Trip ' + (t + 1) + ': ' + csvPlaces(r)]);
+    const rateUsed = csvRateUsed(r);
+    if (rateUsed) lines.push([rateUsed]);
+  });
+  lines.push(CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
+  plan.trips.forEach(function (r, t) {
+    const name = 'Trip ' + (t + 1);
+    lines.push([name]);
+    if (r.tripType === 'day_short') {
+      lines.push([r.departIso, 'FY' + fiscalYearOf(parseISODate(r.departIso)),
+        'Day trip of 12 hours or less: no per diem', '', '0', '0', '0']);
+    } else {
+      csvDays(r, lines);
+    }
+    lines.push(csvTotal('Subtotal: ' + name, r));
+  });
+  lines.push(csvTotal('Total', plan));
+  return { filename: 'per-diem-trips-' + span[0] + '-to-' + span[1] + '.csv', text: csvText(lines) };
 }

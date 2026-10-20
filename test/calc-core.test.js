@@ -1,6 +1,7 @@
-// Golden tests from docs/phase-4-calculator.md (1–9) and docs/v1.1.0-multi-city.md (10–23), run
-// against the committed data/ files, plus the CSV export and GA4 params helpers (v1.1 §8, §9) and
-// the per-destination dates, breakdown and error targeting (v1.1 §17).
+// Golden tests from docs/phase-4-calculator.md (1–9), docs/v1.1.0-multi-city.md (10–23) and
+// docs/v1.2.0-separate-trips.md (35–44), run against the committed data/ files, plus the CSV export and
+// GA4 params helpers (v1.1 §8, §9), the per-destination dates, breakdown and error targeting (v1.1 §17),
+// and the plan messages, validation order, summary, By trip lines, CSV and GA4 params (v1.2 §3, §4, §6, §7).
 // Run in several time zones: npm test, then TZ=America/Los_Angeles and TZ=Asia/Kolkata.
 
 import { test } from 'node:test';
@@ -9,7 +10,8 @@ import { readFileSync } from 'node:fs';
 import {
   calculate, validateDates, buildLocationOptions, parseISODate, dayParts, fiscalYearOf, toISODate,
   formatMoney, summaryText, MESSAGES, calculateTrip, validateTrip, tripSummaryText, locationType,
-  buildCsv, analyticsParams, destinationSpans, spanText
+  buildCsv, analyticsParams, destinationSpans, spanText, calculatePlan, planNeeded, MAX_TRIPS, tripDatesText,
+  planSummaryText, breakdownLines, planAnalyticsParams, buildPlanCsv, allShort
 } from '../src/calc-core.js';
 import { states } from '../scripts/lib/states.js';
 
@@ -585,4 +587,369 @@ test('§17 every message says which destination and field it is about', () => {
   // validateDates names the date too (used by the v1.0 API).
   assert.equal(validateDates('2026-10-16', '2026-10-12', meta).field, 'return');
   assert.equal(validateDates('', '2026-10-12', meta).field, 'depart');
+});
+
+// ---- v1.2.0: separate trips (docs/v1.2.0-separate-trips.md §3, §10) ----
+
+// Golden trips the plan tests reuse, as runTrip takes them: [departIso, returnIso, destinations, over12].
+const SF_1 = ['2026-10-01', '2026-10-03', [['CA', '35']]];                                     // test 1: $788
+const WILMINGTON_3 = ['2026-10-05', '2026-10-05', [['DE', '78']], true];                       // test 3: $55.50
+const ND_4 = (d = '2026-10-10', r = '2026-10-11') => [d, r, [['ND', 'std']]];                // test 4: $215
+const SF_5 = ['2026-09-29', '2026-10-02', [['CA', '35']]];                                     // test 5: $1,145
+const NYC_PIT_10 = ['2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '318', '2026-10-14']]]; // test 10: $1,385
+const NYC = (d, r, over12) => [d, r, [['NY', '266']], over12];
+
+// trips in entry order, each as runTrip takes it. Loads exactly the state files planNeeded lists, as
+// perdiem.js will.
+function runPlan(trips) {
+  const plan = {
+    meta,
+    trips: trips.map(([departIso, returnIso, destinations, over12]) => ({
+      departIso, returnIso, over12,
+      destinations: destinations.map(([state, location, arrive]) =>
+        ({ state, location, arrive: arrive || null, stateName: STATE_NAMES[state] }))
+    }))
+  };
+  const files = {};
+  planNeeded(plan, meta).forEach(([fy, st]) => { (files[fy] = files[fy] || {})[st] = readJson(`data/${fy}/${st}.json`); });
+  return calculatePlan({ ...plan, files });
+}
+
+function planBreakdown(t, r) {
+  r.trips.forEach((x, i) => {
+    const m = money(x);
+    t.diagnostic(`trip ${i + 1}  ${x.departIso} to ${x.returnIso}  ${x.tripType.padEnd(9)}  days ${x.days}` +
+      `  lodging ${m.lodging}  M&IE ${m.mie}  total ${m.total}`);
+    if (x.destinations.length > 1 && x.tripType === 'overnight') {
+      x.destinations.forEach((d) => t.diagnostic(`          ${d.place.padEnd(30)}  ${formatMoney(d.total)}`));
+    }
+  });
+  const m = money(r);
+  t.diagnostic(`PLAN  trips ${r.trips.length}  days ${r.days}  lodging ${m.lodging}  meals ${m.meals}` +
+    `  incidentals ${m.incidentals}  M&IE ${m.mie}  total ${m.total}`);
+}
+
+// Each trip in the plan is exactly its result on its own: its own 75% first and last day.
+function sameAsAlone(plan, trips) {
+  trips.forEach(([d, r, dests, over12], i) => {
+    const alone = runTrip(d, r, dests, over12);
+    assert.deepEqual(money(plan.trips[i]), money(alone), `trip ${i + 1}`);
+    assert.deepEqual(plan.trips[i].rows, alone.rows, `trip ${i + 1}`);
+  });
+}
+
+test('35. Two trips: San Francisco 1–3 Oct (test 1), North Dakota 10–11 Oct (test 4)', (t) => {
+  const r = runPlan([SF_1, ND_4()]);
+  assert.equal(r.ok, true);
+  planBreakdown(t, r);
+  assert.equal(r.trips.length, 2);
+  assert.equal(r.days, 5);
+  assert.deepEqual(money(r),
+    { lodging: '$671', mie: '$332', meals: '$312', incidentals: '$20', total: '$1,003' });
+  assert.deepEqual(r.trips.map((x) => formatMoney(x.total)), ['$788', '$215']);
+  sameAsAlone(r, [SF_1, ND_4()]);
+  // Plan rows: each trip's rows in entry order, each naming its trip. Both trips start and end at 75%.
+  assert.deepEqual(r.rows.map((x) => x.trip), [0, 0, 0, 1, 1]);
+  assert.deepEqual(r.rows.map((x) => x.mie), [69, 92, 69, 51, 51]);
+});
+
+test('36. Multi-city trip plus a day trip, not in date order: NYC → Pittsburgh (test 10), Wilmington (test 3)', (t) => {
+  const r = runPlan([NYC_PIT_10, WILMINGTON_3]);
+  assert.equal(r.ok, true);
+  planBreakdown(t, r);
+  assert.equal(r.days, 6);
+  assert.deepEqual(money(r),
+    { lodging: '$1,004', mie: '$436.50', meals: '$410.25', incidentals: '$26.25', total: '$1,440.50' });
+  // Entry order, not date order: trip 2 (5 Oct) comes before trip 1 in time.
+  assert.deepEqual(r.trips.map((x) => [x.departIso, x.tripType, formatMoney(x.total)]),
+    [['2026-10-12', 'overnight', '$1,385'], ['2026-10-05', 'day', '$55.50']]);
+  assert.deepEqual(r.trips[0].destinations.map((d) => [d.place, formatMoney(d.total)]),
+    [['New York City', '$877'], ['Pittsburgh', '$508']]);
+  assert.deepEqual(r.rows.map((x) => x.trip), [0, 0, 0, 0, 0, 1]);
+  sameAsAlone(r, [NYC_PIT_10, WILMINGTON_3]);
+});
+
+test('37. Day trip with the switch off inside a plan: test 1, then New York City 12 Oct, switch off', (t) => {
+  const r = runPlan([SF_1, NYC('2026-10-12', '2026-10-12', false)]);
+  assert.equal(r.ok, true, 'the plan stays valid');
+  planBreakdown(t, r);
+  assert.equal(formatMoney(r.total), '$788');
+  assert.equal(r.trips[1].tripType, 'day_short');
+  assert.deepEqual(money(r.trips[1]), { lodging: '$0', mie: '$0', meals: '$0', incidentals: '$0', total: '$0' });
+  assert.equal(r.trips[1].notice, MESSAGES.dayShort);
+  assert.equal(r.trips[1].rows.length, 0);
+  // Plan days are the sum of the trips' days (§3.2): the day trip still counts its day.
+  assert.equal(r.days, 4);
+  assert.equal(r.rows.length, 3);
+});
+
+test('38. Overlap: trip 1 12–16 Oct, trip 2 14–18 Oct', (t) => {
+  const r = runPlan([NYC('2026-10-12', '2026-10-16'), NYC('2026-10-14', '2026-10-18')]);
+  t.diagnostic(JSON.stringify(r));
+  assert.deepEqual(r, { ok: false, error: 'Trip 2 overlaps trip 1. Check the dates.', incomplete: false,
+    dest: null, field: 'depart', trip: 1 });
+});
+
+test('39. Touching, both directions', (t) => {
+  // (a) Trip 2 departs the day trip 1 returns.
+  const a = runPlan([NYC('2026-10-12', '2026-10-16'), NYC('2026-10-16', '2026-10-18')]);
+  t.diagnostic('(a) ' + JSON.stringify(a));
+  assert.deepEqual(a, { ok: false,
+    error: 'Trip 2 starts the day trip 1 ends. For one continuous trip, use Add another destination instead.',
+    incomplete: false, dest: null, field: 'depart', trip: 1 });
+  // (b) Trip 2 is earlier in time and returns the day trip 1 departs.
+  const b = runPlan([NYC('2026-10-16', '2026-10-18'), NYC('2026-10-12', '2026-10-16')]);
+  t.diagnostic('(b) ' + JSON.stringify(b));
+  assert.deepEqual(b, { ok: false,
+    error: 'Trip 2 ends the day trip 1 starts. For one continuous trip, use Add another destination instead.',
+    incomplete: false, dest: null, field: 'depart', trip: 1 });
+  // Both hold only for two day trips on the same date: the first message.
+  const same = runPlan([NYC('2026-10-12', '2026-10-12', true), NYC('2026-10-12', '2026-10-12', true)]);
+  assert.equal(same.error, MESSAGES.tripTouch(2, 1, true));
+  // A day trip on another trip's return day touches it; one in the middle of it overlaps it.
+  assert.equal(runPlan([NYC('2026-10-12', '2026-10-16'), NYC('2026-10-16', '2026-10-16', true)]).error,
+    MESSAGES.tripTouch(2, 1, true));
+  assert.equal(runPlan([NYC('2026-10-12', '2026-10-16'), NYC('2026-10-14', '2026-10-14', true)]).error,
+    MESSAGES.tripOverlap(2, 1));
+  // A day apart is fine.
+  assert.equal(runPlan([NYC('2026-10-12', '2026-10-16'), NYC('2026-10-17', '2026-10-18')]).ok, true);
+});
+
+test('40. Overlap entered in reverse: trip 1 20–22 Oct, trip 2 18–21 Oct', (t) => {
+  const r = runPlan([NYC('2026-10-20', '2026-10-22'), NYC('2026-10-18', '2026-10-21')]);
+  t.diagnostic(JSON.stringify(r));
+  assert.deepEqual(r, { ok: false, error: 'Trip 2 overlaps trip 1. Check the dates.', incomplete: false,
+    dest: null, field: 'depart', trip: 1 });
+});
+
+test('41. Five trips: test 4 (North Dakota standard) on 10–11, 13–14, 16–17, 19–20 and 22–23 Oct 2026', (t) => {
+  const trips = [10, 13, 16, 19, 22].map((d) => ND_4(`2026-10-${d}`, `2026-10-${d + 1}`));
+  const r = runPlan(trips);
+  assert.equal(r.ok, true);
+  planBreakdown(t, r);
+  assert.equal(r.trips.length, 5);
+  assert.equal(r.days, 10);
+  assert.equal(formatMoney(r.total), '$1,075');
+  assert.deepEqual(r.trips.map((x) => x.total), [215, 215, 215, 215, 215]);
+  // No sixth trip (the page disables Add another trip at 5; the DOM check is in the harness).
+  assert.equal(MAX_TRIPS, 5);
+  assert.throws(() => runPlan(trips.concat([ND_4('2026-10-25', '2026-10-26')])), /1 to 5 trips required/);
+});
+
+test('42. Plan across the fiscal-year boundary: test 5 (29 Sep – 2 Oct 2026), then test 4', (t) => {
+  const r = runPlan([SF_5, ND_4()]);
+  assert.equal(r.ok, true);
+  planBreakdown(t, r);
+  assert.deepEqual(r.trips.map((x) => formatMoney(x.total)), ['$1,145', '$215']);
+  assert.deepEqual(r.rows.map((x) => x.fiscalYear), [2026, 2026, 2027, 2027, 2027, 2027]);
+  assert.equal(formatMoney(r.total), '$1,360');
+  sameAsAlone(r, [SF_5, ND_4()]);
+});
+
+test('v1.2 messages name the trip once there are 2+ trips; a lone trip keeps v1.1', () => {
+  const at = (r) => [r.error, r.incomplete, r.trip, r.dest, r.field];
+  // One trip: calculateTrip's result exactly, plus trip 0.
+  const lone = [NYC_PIT_10[0], NYC_PIT_10[1], [['NY', '266'], ['PA', '318', '2026-10-12']]];
+  assert.deepEqual(runPlan([lone]), { ...runTrip(...lone), trip: 0 });
+  assert.deepEqual(at(runPlan([NYC('2026-10-16', '2026-10-12')])),
+    [MESSAGES.returnBeforeDepart, false, 0, null, 'return']);
+  assert.deepEqual(at(runPlan([[SF_1[0], SF_1[1], [['', '']]]])), ['Choose a state', true, 0, 0, 'state']);
+  assert.deepEqual(money(runPlan([NYC_PIT_10])), money(runTrip(...NYC_PIT_10)));
+  // Two trips: each trip's own date messages.
+  assert.deepEqual(at(runPlan([SF_1, NYC('', '2026-10-16')])),
+    ['Choose the departure date for trip 2.', true, 1, null, 'depart']);
+  assert.deepEqual(at(runPlan([SF_1, NYC('2026-10-12', '')])),
+    ['Choose the return date for trip 2.', true, 1, null, 'return']);
+  assert.deepEqual(at(runPlan([NYC('', ''), SF_1])),
+    ['Choose the departure date for trip 1.', true, 0, null, 'depart']);
+  assert.deepEqual(at(runPlan([SF_1, NYC('2026-10-16', '2026-10-12')])),
+    ['Trip 2’s return date is before its departure date.', false, 1, null, 'return']);
+  // Every other message gets the "Trip k: " prefix, keeping its destination and field.
+  assert.deepEqual(at(runPlan([SF_1, ['2026-10-12', '2026-10-16', [['', '']]]])),
+    ['Trip 2: Choose a state', true, 1, 0, 'state']);
+  assert.deepEqual(at(runPlan([SF_1, ['2026-10-12', '2026-10-16', [['NY', '266'], ['PA', '', '2026-10-14']]]])),
+    ['Trip 2: Choose a city or county for destination 2.', true, 1, 1, 'location']);
+  assert.deepEqual(at(runPlan([lone, SF_1])),
+    ['Trip 1: ' + MESSAGES.noNightFirst('New York City'), false, 0, 1, 'arrive']);
+  assert.deepEqual(at(runPlan([SF_1, NYC('2027-09-29', '2027-10-02')])),
+    ['Trip 2: Rates for October 2027 aren’t published yet.', false, 1, null, 'return']);
+  assert.deepEqual(at(runPlan([SF_1, NYC('2026-10-12', '2027-10-12')])),
+    ['Trip 2: Trips can be up to 365 days.', false, 1, null, 'return']);
+});
+
+test('v1.2 validation order: trip by trip in full, then the overlap check', () => {
+  // Trip 1's no-night error needs its data file, and still wins over trip 2's missing date.
+  const noNight = [NYC_PIT_10[0], NYC_PIT_10[1], [['NY', '266'], ['PA', '318', '2026-10-16']]];
+  assert.equal(runPlan([noNight, NYC('', '')]).error, 'Trip 1: ' + NO_NIGHT('Pittsburgh'));
+  // A trip's own problem wins over an overlap.
+  const r = runPlan([NYC('2026-10-12', '2026-10-16'), ['2026-10-14', '2026-10-18', [['NY', '']]]]);
+  assert.equal(r.error, 'Trip 2: Choose a city or county');
+  // Each trip against the trips entered before it: trip 3's clash with trip 2 is found before trip 4's
+  // with trip 1.
+  const plan = runPlan([ND_4('2026-10-01', '2026-10-03'), ND_4('2026-10-05', '2026-10-08'),
+    ND_4('2026-10-07', '2026-10-09'), ND_4('2026-10-02', '2026-10-04')]);
+  assert.deepEqual([plan.error, plan.trip], ['Trip 3 overlaps trip 2. Check the dates.', 2]);
+  // planNeeded stops at the first trip that fails without data: no files for the trips after it.
+  const trips = [NYC_PIT_10, ['2026-10-20', '2026-10-21', [['', '']]], SF_1].map(([departIso, returnIso, ds]) =>
+    ({ departIso, returnIso, destinations: ds.map(([state, location, arrive]) => ({ state, location, arrive })) }));
+  assert.deepEqual(planNeeded({ trips }, meta), [[2027, 'NY'], [2027, 'PA']]);
+  assert.deepEqual(planNeeded({ trips: [trips[0], trips[2]] }, meta), [[2027, 'NY'], [2027, 'PA'], [2027, 'CA']]);
+  // 1 to 5 trips.
+  assert.throws(() => calculatePlan({ meta, files: {}, trips: [] }), /1 to 5 trips required/);
+});
+
+test('v1.2 tripDatesText: each trip\'s dates line, from the dates alone', () => {
+  assert.equal(tripDatesText('2026-10-12', '2026-10-16', 2), '12–16 Oct 2026 · 5 days · 2 cities');
+  assert.equal(tripDatesText('2026-10-01', '2026-10-03', 1), '1–3 Oct 2026 · 3 days · 1 city');
+  assert.equal(tripDatesText('2026-09-29', '2026-10-02', 1), '29 Sep – 2 Oct 2026 · 4 days · 1 city');
+  assert.equal(tripDatesText('2026-10-12', '2026-10-12', 1), '12 Oct 2026 · day trip');
+  assert.equal(tripDatesText('2026-10-12', '2026-10-12', 3), '12 Oct 2026 · day trip');
+  // Nothing until both dates are known and in order; errors replace the line on the page.
+  assert.equal(tripDatesText('', '2026-10-16', 1), '');
+  assert.equal(tripDatesText('2026-10-12', '', 1), '');
+  assert.equal(tripDatesText('2026-10-16', '2026-10-12', 1), '');
+});
+
+// ---- v1.2.0 step 4: plan results, export and analytics (docs/v1.2.0-separate-trips.md §4, §6, §7) ----
+
+const NYC_SHORT = NYC('2026-10-12', '2026-10-12', false);
+
+test('43. v1.1 markup (calc part): one trip gives exactly the v1.1 results; the v1.1 fixture has no trip hooks', () => {
+  // The single-trip golden inputs of tests 1–6 and 10–18.
+  const golden = [SF_1, ['2027-03-01', '2027-03-04', [['DC', '75']]], WILMINGTON_3, ND_4(), SF_5,
+    ['2026-09-28', '2026-10-02', [['PA', '307']]], NYC_PIT_10,
+    ['2026-09-29', '2026-10-03', [['CA', '35'], ['PA', '318', '2026-10-01']]],
+    ['2026-09-29', '2026-10-04', [['PA', '307'], ['PA', '317', '2026-10-02']]],
+    ['2027-03-01', '2027-03-04', [['DC', '75'], ['DE', '78', '2027-03-03']]],
+    ['2026-11-09', '2026-11-14', [['NY', '266'], ['NY', '258', '2026-11-11'], ['MA', '148', '2026-11-12']]],
+    ['2026-10-19', '2026-10-22', [['WI', 'std'], ['WI', '397', '2026-10-21']]],
+    ['2026-10-12', '2026-10-12', [['NY', '258'], ['NY', '266']], true], NYC_SHORT, WILMINGTON_3];
+  golden.forEach((g) => {
+    const alone = runTrip(...g);
+    const plan = runPlan([g]);
+    assert.equal(plan.ok, true, g.join(' '));
+    assert.deepEqual(money(plan), money(alone), g.join(' '));
+    assert.deepEqual(plan.trips[0].rows, alone.rows, g.join(' '));
+    // One trip's breakdown lines are v1.1's "By destination" lines.
+    assert.deepEqual(breakdownLines(alone), alone.tripType === 'overnight' && alone.destinations.length > 1
+      ? alone.destinations.map((d) => ({ place: d.place, dates: spanText(d), amount: d.total, sub: false })) : []);
+    // GA4: the v1.1 params, plus trips 1.
+    assert.deepEqual(planAnalyticsParams({ trips: [alone], days: alone.days }), { ...analyticsParams(alone), trips: 1 });
+  });
+  // The script runs separate trips only with trip-list, trip-template and add-trip; the v1.1 markup has
+  // none of the v1.2 hooks, so Add another trip can't appear (DOM check: test/harness-v1.1.html).
+  const fixture = (v) => readFileSync(new URL(`test/fixtures/03-calculator-${v}.html`, root), 'utf8');
+  const v12Hooks = ['trip1-title', 'trip1-status', 'trip-list', 'trip-template', 'add-trip-wrap', 'add-trip',
+    'add-trip-note', 'total-label', 'breakdown-title', 'trip-breakdown-template'];
+  v12Hooks.forEach((h) => {
+    assert.ok(!fixture('v1.1').includes(`data-pd="${h}"`), `v1.1 fixture has no ${h}`);
+    assert.ok(fixture('v1.2').includes(`data-pd="${h}"`), `v1.2 fixture has ${h}`);
+  });
+  assert.ok(!fixture('v1.1').includes('data-pd-trip='));
+  ['title', 'remove', 'status', 'depart', 'return', 'over12-wrap', 'over12', 'dest1-title', 'dest1-status', 'state',
+    'location', 'dest-list', 'add-wrap', 'add', 'add-note'].forEach((h) =>
+    assert.ok(fixture('v1.2').includes(`data-pd-trip="${h}"`), `v1.2 trip template has ${h}`));
+});
+
+test('44. CSV for test 36: trips header, trip title rows, destination and trip subtotals, total, filename', () => {
+  const r = runPlan([NYC_PIT_10, WILMINGTON_3]);
+  const csv = buildPlanCsv(r, '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-trips-2026-10-05-to-2026-10-16.csv');
+  assert.deepEqual(csvLines(csv), [
+    '"ITILITE per diem estimate"',
+    '"Trips: 2"',
+    '"Trip 1: New York City, New York (12–14 Oct 2026); Pittsburgh, Pennsylvania (14–16 Oct 2026)"',
+    '"Trip 2: Wilmington, Delaware (5 Oct 2026)"',
+    '"Source: U.S. General Services Administration per diem rates"',
+    '"Generated 16 Oct 2026"',
+    '',
+    CSV_HEADER,
+    '"Trip 1"',
+    '"2026-10-12","FY2027","New York City, New York","358","65.25","3.75","427"',
+    '"2026-10-13","FY2027","New York City, New York","358","87","5","450"',
+    '"Subtotal: New York City","","","716","152.25","8.75","877"',
+    '"2026-10-14","FY2027","Pittsburgh, Pennsylvania","144","75","5","224"',
+    '"2026-10-15","FY2027","Pittsburgh, Pennsylvania","144","75","5","224"',
+    '"2026-10-16","FY2027","Pittsburgh, Pennsylvania","","56.25","3.75","60"',
+    '"Subtotal: Pittsburgh","","","288","206.25","13.75","508"',
+    '"Subtotal: Trip 1","","","1004","358.50","22.50","1385"',
+    '"Trip 2"',
+    '"2026-10-05","FY2027","Wilmington, Delaware","","51.75","3.75","55.50"',
+    '"Subtotal: Trip 2","","","0","51.75","3.75","55.50"',
+    '"Total","","","1004","410.25","26.25","1440.50"'
+  ]);
+});
+
+test('v1.2 CSV: a short day trip, a same-day trip with stops, a standard rate, and the filename span', () => {
+  // Test 37: the switch-off day trip is one zero row with the note; the filename spans 1–12 Oct.
+  const r37 = runPlan([SF_1, NYC_SHORT]);
+  const csv37 = buildPlanCsv(r37, '2026-10-16');
+  assert.equal(csv37.filename, 'per-diem-trips-2026-10-01-to-2026-10-12.csv');
+  const lines37 = csvLines(csv37);
+  assert.deepEqual(lines37.slice(1, 4), ['"Trips: 2"', '"Trip 1: San Francisco, California (1–3 Oct 2026)"',
+    '"Trip 2: New York City, New York (12 Oct 2026)"']);
+  assert.deepEqual(lines37.slice(-4), [
+    '"Trip 2"',
+    '"2026-10-12","FY2027","Day trip of 12 hours or less: no per diem","","0","0","0"',
+    '"Subtotal: Trip 2","","","0","0","0","0"',
+    '"Total","","","558","217.50","12.50","788"'
+  ]);
+  // A same-day trip with two stops keeps v1.1's rate-used line, under its own trip line; a standard
+  // rate is named as in v1.1.
+  const r = runPlan([ND_4(), ['2026-10-12', '2026-10-12', [['NY', '258'], ['NY', '266']], true]]);
+  assert.deepEqual(csvLines(buildPlanCsv(r, '2026-10-16')).slice(1, 5), [
+    '"Trips: 2"',
+    '"Trip 1: Standard rate, North Dakota (10–11 Oct 2026)"',
+    '"Trip 2: Albany, New York (12 Oct 2026); New York City, New York (12 Oct 2026)"',
+    '"Same-day trip, away more than 12 hours. Rate used: New York City (the highest of your stops)."'
+  ]);
+});
+
+test('v1.2 summary line and By trip lines for tests 35, 36, 37 and 41', () => {
+  const r35 = runPlan([SF_1, ND_4()]);
+  assert.equal(planSummaryText(r35),
+    '2 trips, 5 days: San Francisco (1–3 Oct 2026) and North Dakota (standard rate) (10–11 Oct 2026). ' +
+    'Total allowance $1,003.');
+  assert.deepEqual(breakdownLines(r35), [
+    { place: 'Trip 1: San Francisco', dates: '1–3 Oct 2026 · 3 days · 1 city', amount: 788, sub: false },
+    { place: 'Trip 2: North Dakota (standard rate)', dates: '10–11 Oct 2026 · 2 days · 1 city', amount: 215, sub: false }
+  ]);
+  const r36 = runPlan([NYC_PIT_10, WILMINGTON_3]);
+  assert.equal(planSummaryText(r36),
+    '2 trips, 6 days: New York City and 1 more (12–16 Oct 2026) and Wilmington (5 Oct 2026). ' +
+    'Total allowance $1,440.50.');
+  assert.deepEqual(breakdownLines(r36), [
+    { place: 'Trip 1: New York City and Pittsburgh', dates: '12–16 Oct 2026 · 5 days · 2 cities', amount: 1385, sub: false },
+    { place: 'New York City', dates: '12–14 Oct 2026 · 2 nights', amount: 877, sub: true },
+    { place: 'Pittsburgh', dates: '14–16 Oct 2026 · 2 nights', amount: 508, sub: true },
+    { place: 'Trip 2: Wilmington', dates: '5 Oct 2026 · day trip', amount: 55.5, sub: false }
+  ]);
+  // The trip lines add up to the plan total.
+  [r35, r36].forEach((r) => assert.equal(breakdownLines(r).filter((l) => !l.sub).reduce((s, l) => s + l.amount, 0), r.total));
+  const r37 = runPlan([SF_1, NYC_SHORT]);
+  assert.equal(planSummaryText(r37),
+    '2 trips, 4 days: San Francisco (1–3 Oct 2026) and New York City (12 Oct 2026). Total allowance $788.');
+  assert.equal(allShort(r37), false);
+  // Three or more: the overall dates (the spec's example: three North Dakota trips of 2 days each).
+  assert.equal(planSummaryText(runPlan([ND_4('2026-10-10', '2026-10-11'), ND_4('2026-10-13', '2026-10-14'),
+    ND_4('2026-10-17', '2026-10-18')])), '3 trips, 6 days, 10–18 Oct 2026. Total allowance $645.');
+  assert.equal(planSummaryText(runPlan([10, 13, 16, 19, 22].map((d) => ND_4(`2026-10-${d}`, `2026-10-${d + 1}`)))),
+    '5 trips, 10 days, 10–23 Oct 2026. Total allowance $1,075.');
+  // Only short day trips: the notice, and nothing to export (the page disables Export).
+  const short = runPlan([NYC_SHORT, NYC('2026-10-14', '2026-10-14', false)]);
+  assert.equal(short.ok, true);
+  assert.equal(allShort(short), true);
+  assert.equal(planSummaryText(short), MESSAGES.dayShort);
+});
+
+test('v1.2 GA4 params for tests 35, 36 and 37', () => {
+  assert.deepEqual(planAnalyticsParams(runPlan([SF_1, ND_4()])),
+    { state: 'CA', location_type: 'mixed', days: 5, destinations: 2, trip_type: 'overnight', trips: 2 });
+  assert.deepEqual(planAnalyticsParams(runPlan([NYC_PIT_10, WILMINGTON_3])),
+    { state: 'NY', location_type: 'nsa', days: 6, destinations: 3, trip_type: 'mixed', trips: 2 });
+  assert.deepEqual(planAnalyticsParams(runPlan([SF_1, NYC_SHORT])),
+    { state: 'CA', location_type: 'nsa', days: 4, destinations: 2, trip_type: 'mixed', trips: 2 });
+  // Test 41: five overnight standard-rate trips.
+  assert.deepEqual(planAnalyticsParams(runPlan([10, 13, 16, 19, 22].map((d) => ND_4(`2026-10-${d}`, `2026-10-${d + 1}`)))),
+    { state: 'ND', location_type: 'standard', days: 10, destinations: 5, trip_type: 'overnight', trips: 5 });
 });
