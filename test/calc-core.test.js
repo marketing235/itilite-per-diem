@@ -1,7 +1,9 @@
-// Golden tests from docs/phase-4-calculator.md (1–9), docs/v1.1.0-multi-city.md (10–23) and
-// docs/v1.2.0-separate-trips.md (35–44), run against the committed data/ files, plus the CSV export and
-// GA4 params helpers (v1.1 §8, §9), the per-destination dates, breakdown and error targeting (v1.1 §17),
-// and the plan messages, validation order, summary, By trip lines, CSV and GA4 params (v1.2 §3, §4, §6, §7).
+// Golden tests from docs/phase-4-calculator.md (1–9), docs/v1.1.0-multi-city.md (10–23),
+// docs/v1.2.0-separate-trips.md (35–44) and docs/v1.3.0-compare-cities.md (46–54), run against the
+// committed data/ files, plus the CSV export and GA4 params helpers (v1.1 §8, §9), the per-destination
+// dates, breakdown and error targeting (v1.1 §17), the plan messages, validation order, summary, By trip
+// lines, CSV and GA4 params (v1.2 §3, §4, §6, §7), and the compare validation order, summary and result
+// lines (v1.3 §3, §5).
 // Run in several time zones: npm test, then TZ=America/Los_Angeles and TZ=Asia/Kolkata.
 
 import { test } from 'node:test';
@@ -11,7 +13,8 @@ import {
   calculate, validateDates, buildLocationOptions, parseISODate, dayParts, fiscalYearOf, toISODate,
   formatMoney, summaryText, MESSAGES, calculateTrip, validateTrip, tripSummaryText, locationType,
   buildCsv, analyticsParams, destinationSpans, spanText, calculatePlan, planNeeded, MAX_TRIPS, tripDatesText,
-  planSummaryText, breakdownLines, planAnalyticsParams, buildPlanCsv, allShort
+  planSummaryText, breakdownLines, planAnalyticsParams, buildPlanCsv, allShort, MAX_CITIES, calculateCompare,
+  compareNeeded, compareSummaryText, compareLines, compareAnalyticsParams, buildCompareCsv
 } from '../src/calc-core.js';
 import { states } from '../scripts/lib/states.js';
 
@@ -952,4 +955,326 @@ test('v1.2 GA4 params for tests 35, 36 and 37', () => {
   // Test 41: five overnight standard-rate trips.
   assert.deepEqual(planAnalyticsParams(runPlan([10, 13, 16, 19, 22].map((d) => ND_4(`2026-10-${d}`, `2026-10-${d + 1}`)))),
     { state: 'ND', location_type: 'standard', days: 10, destinations: 5, trip_type: 'overnight', trips: 5 });
+});
+
+// ---- v1.3.0: Compare cities (docs/v1.3.0-compare-cities.md §3, §5, §7, §8, §11) ----
+
+// The cities the compare tests use, as [state, location].
+const CITY = {
+  SF: ['CA', '35'], NYC: ['NY', '266'], ND: ['ND', 'std'], PIT: ['PA', '318'], WIL: ['DE', '78'], WI: ['WI', 'std']
+};
+
+// cities: [state, location] in entry order. Loads exactly the state files compareNeeded lists, as perdiem.js
+// will.
+function runCompare(departIso, returnIso, cities, over12) {
+  const cmp = { meta, departIso, returnIso, over12,
+    cities: cities.map(([state, location]) => ({ state, location, stateName: STATE_NAMES[state] })) };
+  const files = {};
+  compareNeeded(cmp, meta).forEach(([fy, st]) => { (files[fy] = files[fy] || {})[st] = readJson(`data/${fy}/${st}.json`); });
+  return calculateCompare({ ...cmp, files });
+}
+
+function compareBreakdown(t, r) {
+  r.cities.forEach((x, i) => {
+    const m = money(x);
+    t.diagnostic(`city ${i + 1}  ${x.destinations[0].place.padEnd(30)}  ${x.tripType.padEnd(9)}  days ${x.days}` +
+      `  lodging ${m.lodging.padStart(6)}  M&IE ${m.mie.padStart(7)}  total ${m.total.padStart(6)}` +
+      (r.lowest.includes(i) ? '  LOWEST' : '') + (r.highest.includes(i) ? '  highest' : ''));
+  });
+  t.diagnostic(`COMPARE  days ${r.days}  ${r.tripType}  lowest [${r.lowest}]  highest [${r.highest}]`);
+}
+
+// Each city is exactly its one-destination trip on its own (§2): its own 75% first and last day.
+function sameAsAloneCities(r, departIso, returnIso, cities, over12) {
+  cities.forEach((c, i) => {
+    const alone = runTrip(departIso, returnIso, [c], over12);
+    assert.deepEqual(money(r.cities[i]), money(alone), `city ${i + 1}`);
+    assert.deepEqual(r.cities[i].rows, alone.rows, `city ${i + 1}`);
+  });
+}
+
+test('46. 12–14 Oct 2026: San Francisco, New York City, North Dakota (standard)', (t) => {
+  const cities = [CITY.SF, CITY.NYC, CITY.ND];
+  const r = runCompare('2026-10-12', '2026-10-14', cities);
+  assert.equal(r.ok, true);
+  compareBreakdown(t, r);
+  assert.deepEqual(r.cities.map((x) => formatMoney(x.total)), ['$788', '$946', '$396']);
+  assert.equal(r.days, 3);
+  assert.equal(r.tripType, 'overnight');
+  assert.deepEqual(r.lowest, [2]);
+  assert.deepEqual(r.highest, [1]);
+  sameAsAloneCities(r, '2026-10-12', '2026-10-14', cities);
+  // Nothing is added up.
+  assert.equal(r.total, undefined);
+});
+
+test('47. Same dates, five cities: + Pittsburgh, Wilmington DE', (t) => {
+  const cities = [CITY.SF, CITY.NYC, CITY.ND, CITY.PIT, CITY.WIL];
+  const r = runCompare('2026-10-12', '2026-10-14', cities);
+  assert.equal(r.ok, true);
+  compareBreakdown(t, r);
+  assert.deepEqual(r.cities.map((x) => formatMoney(x.total)), ['$788', '$946', '$396', '$488', '$439']);
+  assert.deepEqual(r.lowest, [2]);
+  assert.deepEqual(r.highest, [1]);
+  sameAsAloneCities(r, '2026-10-12', '2026-10-14', cities);
+  // No sixth city (the page disables Add another city at 5; the DOM check is in the harness).
+  assert.equal(MAX_CITIES, 5);
+  assert.throws(() => runCompare('2026-10-12', '2026-10-14', cities.concat([CITY.WI])), /up to 5 cities/);
+});
+
+test('48. 5 Oct 2026, day trip, switch on: San Francisco, New York City, Pittsburgh', (t) => {
+  const cities = [CITY.SF, CITY.NYC, CITY.PIT];
+  const r = runCompare('2026-10-05', '2026-10-05', cities, true);
+  assert.equal(r.ok, true);
+  compareBreakdown(t, r);
+  assert.deepEqual(r.cities.map((x) => formatMoney(x.total)), ['$69', '$69', '$60']);
+  assert.equal(r.days, 1);
+  assert.equal(r.tripType, 'day');
+  assert.deepEqual(r.lowest, [2]);
+  assert.deepEqual(r.highest, [0, 1]);
+  sameAsAloneCities(r, '2026-10-05', '2026-10-05', cities, true);
+  assert.deepEqual(compareAnalyticsParams(r),
+    { state: 'CA', cities: 3, days: 1, trip_type: 'day', location_type: 'nsa' });
+});
+
+test('49. 12–14 Oct 2026: Wisconsin (standard), North Dakota (standard), San Francisco — tie at the lowest', (t) => {
+  const r = runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND, CITY.SF]);
+  assert.equal(r.ok, true);
+  compareBreakdown(t, r);
+  assert.deepEqual(r.cities.map((x) => formatMoney(x.total)), ['$396', '$396', '$788']);
+  assert.deepEqual(r.lowest, [0, 1], 'both tied cities are the lowest');
+  assert.deepEqual(r.highest, [2]);
+});
+
+test('50. 5 Oct 2026, switch off: San Francisco, New York City', (t) => {
+  const r = runCompare('2026-10-05', '2026-10-05', [CITY.SF, CITY.NYC], false);
+  assert.equal(r.ok, true, 'the comparison stays valid');
+  compareBreakdown(t, r);
+  assert.equal(r.tripType, 'day_short');
+  assert.deepEqual(r.cities.map((x) => x.total), [0, 0]);
+  r.cities.forEach((x) => assert.equal(x.notice, MESSAGES.dayShort));
+  assert.deepEqual(r.lowest, [], 'no lowest');
+  assert.deepEqual(r.highest, []);
+  assert.equal(compareSummaryText(r, '2026-10-05', '2026-10-05'), MESSAGES.dayShort, 'the 12-hour notice');
+  // Export is enabled only with a city above $0 (the page's check; DOM check in the harness).
+  assert.equal(r.cities.some((x) => x.total > 0), false);
+});
+
+test('51. 29 Sep – 2 Oct 2026 (fiscal-year boundary): San Francisco, New York City, Pittsburgh, North Dakota', (t) => {
+  const cities = [CITY.SF, CITY.NYC, CITY.PIT, CITY.ND];
+  const r = runCompare('2026-09-29', '2026-10-02', cities);
+  assert.equal(r.ok, true);
+  compareBreakdown(t, r);
+  r.cities.forEach((x) => assert.deepEqual(x.rows.map((row) => row.fiscalYear), [2026, 2026, 2027, 2027]));
+  assert.deepEqual(r.cities.map((x) => formatMoney(x.total)), ['$1,145', '$1,364', '$700', '$571']);
+  assert.equal(r.days, 4);
+  assert.deepEqual(r.lowest, [3]);
+  assert.deepEqual(r.highest, [1]);
+  sameAsAloneCities(r, '2026-09-29', '2026-10-02', cities);
+});
+
+test('52. Same city twice (San Francisco, San Francisco)', (t) => {
+  const r = runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.SF]);
+  t.diagnostic(JSON.stringify(r));
+  assert.deepEqual(r, { ok: false, error: 'City 2 is the same as city 1. Choose a different city.',
+    incomplete: false, city: 1, field: 'location' });
+});
+
+test('53. CSV for test 46: header lines, one row per city, Lowest, filename', () => {
+  const r = runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.ND]);
+  const csv = buildCompareCsv(r, '2026-10-12', '2026-10-14', '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-compare-2026-10-12-to-2026-10-14.csv');
+  assert.deepEqual(csvLines(csv), [
+    '"ITILITE per diem comparison"',
+    '"Travel dates: 12–14 Oct 2026 (3 days)"',
+    '"Cities: 3"',
+    '"Source: U.S. General Services Administration per diem rates"',
+    '"Generated 16 Oct 2026"',
+    '',
+    '"City","State","Lodging (USD)","Meals (USD)","Incidentals (USD)","Total (USD)","Lowest"',
+    '"San Francisco","California","558","217.50","12.50","788",""',
+    '"New York City","New York","716","217.50","12.50","946",""',
+    '"Standard rate","North Dakota","226","157.50","12.50","396","Yes"'
+  ]);
+});
+
+test('54. GA4 for test 46: perdiem_compare params', () => {
+  const r = runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.ND]);
+  assert.deepEqual(compareAnalyticsParams(r),
+    { state: 'CA', cities: 3, days: 3, trip_type: 'overnight', location_type: 'mixed' });
+  // Codes and counts only: no dates, place names or anything typed.
+  assert.ok(!JSON.stringify(compareAnalyticsParams(r)).match(/2026|San Francisco|New York|North Dakota/));
+});
+
+test('v1.3 validation order: dates, each city\'s State and City, same city twice, fewer than 2, each city\'s own calculation', () => {
+  const at = (r) => [r.error, r.incomplete, r.city, r.field];
+  const two = [CITY.SF, CITY.NYC];
+  // 1. Dates, unprefixed v1.1 messages (empty dates as the page words them for one trip).
+  assert.deepEqual(at(runCompare('', '2026-10-14', two)), ['Choose your departure date', true, null, 'depart']);
+  assert.deepEqual(at(runCompare('2026-10-12', '', two)), ['Choose your return date', true, null, 'return']);
+  assert.deepEqual(at(runCompare('2026-10-14', '2026-10-12', two)), [MESSAGES.returnBeforeDepart, false, null, 'return']);
+  assert.deepEqual(at(runCompare('2027-09-29', '2027-10-02', two)),
+    ['Rates for October 2027 aren’t published yet.', false, null, 'return']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2027-10-12', two)), [MESSAGES.tooLong, false, null, 'return']);
+  // Dates win over everything else.
+  assert.deepEqual(at(runCompare('', '', [['', ''], CITY.SF, CITY.SF])), ['Choose your departure date', true, null, 'depart']);
+  // 2. Each city in order: State, then City, prefixed (prompts, not errors).
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [['', ''], ['', '']])), ['City 1: Choose a state', true, 0, 'state']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [['CA', ''], ['', '']])),
+    ['City 1: Choose a city or county', true, 0, 'location']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF, ['', '']])), ['City 2: Choose a state', true, 1, 'state']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, ['PA', '']])),
+    ['City 3: Choose a city or county', true, 2, 'location']);
+  // A city still being chosen wins over a duplicate elsewhere.
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.SF, ['', '']])),
+    ['City 3: Choose a state', true, 2, 'state']);
+  // 3. Duplicates: each city against the ones before it; the later one is marked.
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.SF])),
+    ['City 3 is the same as city 1. Choose a different city.', false, 2, 'location']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.NYC, CITY.SF])),
+    ['City 3 is the same as city 2. Choose a different city.', false, 2, 'location']);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.ND, CITY.ND])),
+    ['City 2 is the same as city 1. Choose a different city.', false, 1, 'location']);
+  // Two states' standard rates are two cities, even at the same amount (test 49).
+  assert.equal(runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND]).ok, true);
+  // 4. Fewer than 2 cities: a prompt about the whole comparison.
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [CITY.SF])), [MESSAGES.addCity, true, null, null]);
+  assert.deepEqual(at(runCompare('2026-10-12', '2026-10-14', [])), ['Add another city to compare.', true, null, null]);
+  // 5. Each city's own calculation, prefixed: a rate gap (made-up XX: did 9 only in FY2026, no standard rate).
+  const loc = (did, city) => ({ did, county: city + ' County', city, mie: 80,
+    lodging: [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150] });
+  const xx = {
+    2026: { state: 'XX', fiscalYear: 2026, standard: null, locations: [loc('9', 'Testville')] },
+    2027: { state: 'XX', fiscalYear: 2027, standard: null, locations: [loc('10', 'Othertown')] }
+  };
+  const files = { 2026: { XX: xx[2026], CA: readJson('data/2026/CA.json') }, 2027: { XX: xx[2027], CA: readJson('data/2027/CA.json') } };
+  const gap = calculateCompare({ meta, files, departIso: '2026-09-29', returnIso: '2026-10-02',
+    cities: [{ state: 'CA', location: '35', stateName: 'California' }, { state: 'XX', location: '9', stateName: 'Testland' }] });
+  assert.deepEqual(at(gap), ['City 2: Rates for Testville aren’t available for all of your dates.', false, 1, 'location']);
+  // A duplicate wins over a rate gap in a later city (it needs no data file).
+  const dup = calculateCompare({ meta, files, departIso: '2026-09-29', returnIso: '2026-10-02',
+    cities: [{ state: 'CA', location: '35' }, { state: 'XX', location: '9' }, { state: 'CA', location: '35' }] });
+  assert.equal(dup.error, MESSAGES.citySame(3, 1));
+  // Up to 5 cities.
+  assert.throws(() => calculateCompare({ meta, files: {}, departIso: '2026-10-12', returnIso: '2026-10-14',
+    cities: Array.from({ length: 6 }, () => ({ state: 'CA', location: '35' })) }), /up to 5 cities/);
+});
+
+test('v1.3 compareNeeded lists only the state files the comparison reads', () => {
+  const needed = (d, r, cities) => compareNeeded({ departIso: d, returnIso: r,
+    cities: cities.map(([state, location]) => ({ state, location })) }, meta);
+  assert.deepEqual(needed('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.ND]), [[2027, 'CA'], [2027, 'NY'], [2027, 'ND']]);
+  // Test 51 crosses 1 Oct: both years of every state.
+  assert.deepEqual(needed('2026-09-29', '2026-10-02', [CITY.SF, CITY.NYC]),
+    [[2026, 'CA'], [2027, 'CA'], [2026, 'NY'], [2027, 'NY']]);
+  // Two cities in one state read its file once.
+  assert.deepEqual(needed('2026-10-12', '2026-10-14', [CITY.SF, ['CA', 'std']]), [[2027, 'CA']]);
+  // None while a check that needs no data file fails: its message wins.
+  assert.deepEqual(needed('', '2026-10-14', [CITY.SF, CITY.NYC]), []);
+  assert.deepEqual(needed('2026-10-12', '2026-10-14', [CITY.SF, ['NY', '']]), []);
+  assert.deepEqual(needed('2026-10-12', '2026-10-14', [CITY.SF, CITY.SF]), []);
+  assert.deepEqual(needed('2026-10-12', '2026-10-14', [CITY.SF]), []);
+});
+
+test('v1.3 summary line and result lines for tests 46, 48, 49 and 50', () => {
+  const r46 = runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.NYC, CITY.ND]);
+  assert.equal(compareSummaryText(r46, '2026-10-12', '2026-10-14'),
+    '3 cities, 12–14 Oct 2026 (3 days). Lowest: North Dakota (standard rate) at $396. Highest: New York City at $946.');
+  assert.deepEqual(compareLines(r46), [
+    { place: 'San Francisco', detail: 'Lodging $558 · M&IE $230', amount: 788, lowest: false },
+    { place: 'New York City', detail: 'Lodging $716 · M&IE $230', amount: 946, lowest: false },
+    { place: 'North Dakota (standard rate)', detail: 'Lodging $226 · M&IE $170', amount: 396, lowest: true }
+  ]);
+  // Two cities (test 46 with New York City removed): how much less than the other one.
+  const two = runCompare('2026-10-12', '2026-10-14', [CITY.SF, CITY.ND]);
+  assert.equal(compareSummaryText(two, '2026-10-12', '2026-10-14'),
+    '2 cities, 12–14 Oct 2026 (3 days). Lowest: North Dakota (standard rate) at $396, $392 less than San Francisco.');
+  // Test 49: tie at the lowest, named together.
+  const r49 = runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND, CITY.SF]);
+  assert.equal(compareSummaryText(r49, '2026-10-12', '2026-10-14'),
+    '3 cities, 12–14 Oct 2026 (3 days). Lowest: Wisconsin (standard rate) and North Dakota (standard rate) at $396. ' +
+    'Highest: San Francisco at $788.');
+  assert.deepEqual(compareLines(r49).map((l) => l.lowest), [true, true, false]);
+  // Test 48: a day trip (1 day), tie at the highest.
+  const r48 = runCompare('2026-10-05', '2026-10-05', [CITY.SF, CITY.NYC, CITY.PIT], true);
+  assert.equal(compareSummaryText(r48, '2026-10-05', '2026-10-05'),
+    '3 cities, 5 Oct 2026 (1 day). Lowest: Pittsburgh at $60. Highest: San Francisco and New York City at $69.');
+  assert.deepEqual(compareLines(r48).map((l) => [l.detail, l.lowest]),
+    [['Lodging $0 · M&IE $69', false], ['Lodging $0 · M&IE $69', false], ['Lodging $0 · M&IE $60', true]]);
+  // Every total the same: that amount, no badge; "Both cities" for 2, "All cities" for 3 or more. Three tied
+  // names join as "A, B and C".
+  const same = runCompare('2026-10-05', '2026-10-05', [CITY.SF, CITY.NYC], true);
+  assert.equal(compareSummaryText(same, '2026-10-05', '2026-10-05'),
+    '2 cities, 5 Oct 2026 (1 day). Both cities have the same allowance: $69.');
+  assert.deepEqual(compareLines(same).map((l) => l.lowest), [false, false]);
+  const allSame = runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND, ['IA', 'std']]);
+  assert.equal(compareSummaryText(allSame, '2026-10-12', '2026-10-14'),
+    '3 cities, 12–14 Oct 2026 (3 days). All cities have the same allowance: $396.');
+  assert.deepEqual(compareLines(allSame).map((l) => l.lowest), [false, false, false]);
+  const three = runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND, ['IA', 'std'], CITY.SF]);
+  assert.equal(compareSummaryText(three, '2026-10-12', '2026-10-14'),
+    '4 cities, 12–14 Oct 2026 (3 days). Lowest: Wisconsin (standard rate), North Dakota (standard rate) and ' +
+    'Iowa (standard rate) at $396. Highest: San Francisco at $788.');
+  // Test 50: the 12-hour notice, every line $0, no badge.
+  const r50 = runCompare('2026-10-05', '2026-10-05', [CITY.SF, CITY.NYC], false);
+  assert.equal(compareSummaryText(r50, '2026-10-05', '2026-10-05'), MESSAGES.dayShort);
+  assert.deepEqual(compareLines(r50).map((l) => [l.amount, l.lowest]), [[0, false], [0, false]]);
+});
+
+test('55. v1.2 markup, no compare hooks: everything as v1.2.0, no mode switch', () => {
+  const fixture = (v) => readFileSync(new URL(`test/fixtures/03-calculator-${v}.html`, root), 'utf8');
+  const v12 = fixture('v1.2');
+  const v13 = fixture('v1.3');
+  // perdiem.js runs Compare only with mode, compare-panel and result-compare (plus the rest below); the
+  // v1.2 markup has none of the v1.3 hooks, so the switch never shows (DOM check: test/harness-v1.2.html).
+  const v13Hooks = ['mode', 'calc-panel', 'compare-panel', 'cmp-depart', 'cmp-return', 'cmp-over12-wrap', 'cmp-over12',
+    'cmp-list', 'cmp-template', 'cmp-add-wrap', 'cmp-add', 'cmp-add-note', 'result-calc', 'result-compare', 'cmp-results',
+    'cmp-result-template'];
+  v13Hooks.forEach((h) => {
+    assert.ok(!v12.includes(`data-pd="${h}"`), `v1.2 fixture has no ${h}`);
+    assert.ok(v13.includes(`data-pd="${h}"`), `v1.3 fixture has ${h}`);
+  });
+  ['data-pd-mode=', 'data-pd-city=', 'data-pd-item="badge"'].forEach((h) => assert.ok(!v12.includes(h), `v1.2 has no ${h}`));
+  ['data-pd-mode="calculate"', 'data-pd-mode="compare"', 'data-pd-item="badge"'].concat(
+    ['title', 'remove', 'status', 'state', 'location'].map((h) => `data-pd-city="${h}"`)).forEach((h) =>
+    assert.ok(v13.includes(h), `v1.3 fixture has ${h}`));
+  // v1.3 only adds: every line of the v1.2 markup (after its header comment) is in the v1.3 markup, in order,
+  // and no added line carries a v1.2 hook.
+  const body = (html) => html.slice(html.indexOf('-->', html.indexOf('-->') + 3) + 3).split(/\r?\n/);
+  const old = body(v12);
+  const added = [];
+  let k = 0;
+  body(v13).forEach((line) => {
+    if (k < old.length && line === old[k]) k++;
+    else added.push(line);
+  });
+  assert.equal(k, old.length, 'every v1.2 line is kept, in order');
+  assert.ok(added.length > 0);
+  added.forEach((line) => assert.ok(!/data-pd(-dest|-trip)?="(?!cmp-|mode|calc-panel|compare-panel|result-)/.test(line),
+    'added line carries no v1.2 hook: ' + line.trim()));
+  // New markup with an older script: the switch and the Compare parts carry hidden and stay hidden; the two
+  // wrappers (calc-panel, result-calc) are plain divs.
+  ['mode', 'compare-panel', 'result-compare'].forEach((h) =>
+    assert.match(v13, new RegExp(`<div[^>]*data-pd="${h}"[^>]*\\shidden[\\s>]`), `${h} starts hidden`));
+  ['calc-panel', 'result-calc'].forEach((h) =>
+    assert.doesNotMatch(v13, new RegExp(`<div[^>]*data-pd="${h}"[^>]*\\shidden[\\s>]`), `${h} is not hidden`));
+});
+
+test('v1.3 CSV: a tie (test 49) and a same-day comparison with cents (test 48)', () => {
+  const r49 = runCompare('2026-10-12', '2026-10-14', [CITY.WI, CITY.ND, CITY.SF]);
+  assert.deepEqual(csvLines(buildCompareCsv(r49, '2026-10-12', '2026-10-14', '2026-10-16')).slice(7), [
+    '"Standard rate","Wisconsin","226","157.50","12.50","396","Yes"',
+    '"Standard rate","North Dakota","226","157.50","12.50","396","Yes"',
+    '"San Francisco","California","558","217.50","12.50","788",""'
+  ]);
+  const r48 = runCompare('2026-10-05', '2026-10-05', [CITY.SF, CITY.NYC, CITY.PIT], true);
+  const csv = buildCompareCsv(r48, '2026-10-05', '2026-10-05', '2026-10-16');
+  assert.equal(csv.filename, 'per-diem-compare-2026-10-05-to-2026-10-05.csv');
+  const lines = csvLines(csv);
+  assert.deepEqual(lines.slice(1, 3), ['"Travel dates: 5 Oct 2026 (1 day)"', '"Cities: 3"']);
+  assert.deepEqual(lines.slice(7), [
+    '"San Francisco","California","0","65.25","3.75","69",""',
+    '"New York City","New York","0","65.25","3.75","69",""',
+    '"Pittsburgh","Pennsylvania","0","56.25","3.75","60","Yes"'
+  ]);
 });

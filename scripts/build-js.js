@@ -9,9 +9,10 @@ import { gzipSync } from 'node:zlib';
 const root = new URL('../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8').replace(/\r\n/g, '\n');
 const OUT = 'dist/perdiem.js';
-// Size targets for the served perdiem.min.js (docs/v1.2.0-separate-trips.md §11; v1.1.0 was 22 KB / 8 KB).
-const BUDGET = 28 * 1024;
-const GZIP_BUDGET = 10 * 1024;
+// Size targets for the served perdiem.min.js (docs/v1.3.0-compare-cities.md §12; v1.2.0 was 28 KB / 10 KB,
+// v1.1.0 22 KB / 8 KB). Hard ceiling 40 KB served: past it, Compare loads as a separate file on first use.
+const BUDGET = 38 * 1024;
+const GZIP_BUDGET = 13 * 1024;
 
 function fail(msg) {
   console.error('build-js: ' + msg);
@@ -53,6 +54,7 @@ if (newer) fail('syntax newer than ES2019 near: ' + JSON.stringify(out.slice(new
 // v1.1.0 step 2: measured 18.5 KB minified / 7.1 KB gzipped (terser 5, 16 Oct 2026); estimate 24.2 KB / 8.3 KB.
 // v1.1.0 §17: measured 20.9 KB minified / 7.9 KB gzipped (terser 5, 16 Oct 2026); estimate 27.4 KB / 9.2 KB.
 // v1.2.0 step 4: measured 27.9 KB minified / 9.99 KB gzipped (terser 5.51.2, 19 Oct 2026); estimate 37.0 KB / 11.9 KB.
+// v1.3.0 step 4: measured 36.1 KB minified / 12.2 KB gzipped (terser 5.51.2, 22 Oct 2026); estimate 47.7 KB / 14.5 KB.
 // Only for the report: the stripped text is never written.
 function stripForSize(src) {
   const ident = /[A-Za-z0-9_$\u0080-￿]/;

@@ -1,6 +1,6 @@
 // Pure per diem calculation functions: no DOM, no fetch. Spec: docs/phase-4-calculator.md, extended
-// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules) and docs/v1.2.0-separate-trips.md
-// (plans of separate trips).
+// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules), docs/v1.2.0-separate-trips.md
+// (plans of separate trips) and docs/v1.3.0-compare-cities.md (cities side by side).
 // Written as an ES module so node --test can import it; scripts/build-js.js strips the `export`
 // keywords and inlines this file into the dist/perdiem.js IIFE. Keep syntax at ES2019 or older.
 //
@@ -15,6 +15,7 @@ const MAX_DAYS = 365;
 
 export const MAX_DESTINATIONS = 5;
 export const MAX_TRIPS = 5;
+export const MAX_CITIES = 5;
 
 // k is the 1-based destination number (in the trip messages: the trip number, and j the other trip's);
 // place is a placeName().
@@ -53,7 +54,14 @@ export const MESSAGES = {
   tripTouch: function (k, j, starts) {
     return 'Trip ' + k + (starts ? ' starts the day trip ' + j + ' ends.' : ' ends the day trip ' + j + ' starts.') +
       ' For one continuous trip, use Add another destination instead.';
-  }
+  },
+  // Compare cities (v1.3 spec §3): the empty-date prompts (the page's v1.1 wording), the prefix for a city's
+  // own messages (n is the city number, m the earlier one), the same city twice, and fewer than 2 cities.
+  chooseDepart: 'Choose your departure date',
+  chooseReturn: 'Choose your return date',
+  inCity: function (n, text) { return 'City ' + n + ': ' + text; },
+  citySame: function (n, m) { return 'City ' + n + ' is the same as city ' + m + '. Choose a different city.'; },
+  addCity: 'Add another city to compare.'
 };
 
 // 'YYYY-MM-DD' → day number, or null if malformed or not a real date.
@@ -519,6 +527,82 @@ export function calculatePlan(plan) {
   return out;
 }
 
+// ---- v1.3.0: Compare cities (docs/v1.3.0-compare-cities.md §2, §3) ----
+// comparison: { meta, files, departIso, returnIso, over12, cities: [{ state, location, stateName }] }: up to
+// 5 cities in the order entered, each one destination of a trip on the shared dates and switch.
+
+// A city as a calculateTrip input.
+function cityTrip(cmp, city) {
+  return { departIso: cmp.departIso, returnIso: cmp.returnIso, over12: cmp.over12, meta: cmp.meta,
+    files: cmp.files, destinations: [{ state: city.state, location: city.location, arrive: null,
+      stateName: city.stateName }] };
+}
+
+// A message about city i (0-based; null for the dates or the whole comparison) and its field.
+function cityFail(text, incomplete, i, field) {
+  return { ok: false, error: text, incomplete: incomplete, city: i, field: field };
+}
+
+// The checks that need no data file (§3 steps 1 to 4), in order: the first failure, or null.
+function compareCheck(cmp, meta) {
+  const cities = cmp.cities;
+  if (!cities || cities.length > MAX_CITIES) throw new Error('calculateCompare: up to ' + MAX_CITIES + ' cities');
+  if (!cmp.departIso) return cityFail(MESSAGES.chooseDepart, true, null, 'depart');
+  if (!cmp.returnIso) return cityFail(MESSAGES.chooseReturn, true, null, 'return');
+  const v = validateDates(cmp.departIso, cmp.returnIso, meta);
+  if (!v.ok) return cityFail(v.error, false, null, v.field);
+  for (let i = 0; i < cities.length; i++) {
+    if (!cities[i].state) return cityFail(MESSAGES.inCity(i + 1, MESSAGES.chooseState), true, i, 'state');
+    if (!cities[i].location) return cityFail(MESSAGES.inCity(i + 1, MESSAGES.chooseLocation), true, i, 'location');
+  }
+  // Each city against the cities entered before it; the later one is marked.
+  for (let k = 1; k < cities.length; k++) {
+    for (let j = 0; j < k; j++) {
+      if (cities[k].state === cities[j].state && cities[k].location === cities[j].location) {
+        return cityFail(MESSAGES.citySame(k + 1, j + 1), false, k, 'location');
+      }
+    }
+  }
+  if (cities.length < 2) return cityFail(MESSAGES.addCity, true, null, null);
+  return null;
+}
+
+// The [fy, ST] state files calculateCompare reads: every city's, or none while a check that needs no data
+// file fails (its message wins).
+export function compareNeeded(cmp, meta) {
+  if (compareCheck(cmp, meta)) return [];
+  return planNeeded({ trips: cmp.cities.map(function (c) { return cityTrip(cmp, c); }) }, meta);
+}
+
+// Each city is calculated on its own with calculateTrip: its own 75% first and last day, fiscal years,
+// standard-rate fallback and rate-gap check. Checks in §3 order, first failure wins: the dates (v1.1
+// messages), each city's State then City ("City n: " prompts), the same city twice, fewer than 2 cities,
+// then each city's own calculation ("City n: " errors). Nothing is added up.
+// files must hold compareNeeded(comparison, meta).
+// Returns { ok: false, error, incomplete, city, field } or { ok: true, days, tripType, cities[], lowest[],
+// highest[] }: cities are the calculateTrip results in entry order; lowest and highest are the indexes of the
+// cities at the lowest and highest total, compared in cents, both empty when every total is the same.
+export function calculateCompare(cmp) {
+  const bad = compareCheck(cmp, cmp.meta);
+  if (bad) return bad;
+  const cities = [];
+  for (let i = 0; i < cmp.cities.length; i++) {
+    const r = calculateTrip(cityTrip(cmp, cmp.cities[i]));
+    if (!r.ok) return cityFail(MESSAGES.inCity(i + 1, r.error), r.incomplete, i, r.field);
+    cities.push(r);
+  }
+  const cents = cities.map(function (r) { return Math.round(r.total * 100); });
+  const min = Math.min.apply(null, cents);
+  const max = Math.max.apply(null, cents);
+  const at = function (value) {
+    const out = [];
+    cents.forEach(function (c, i) { if (min !== max && c === value) out.push(i); });
+    return out;
+  };
+  return { ok: true, days: cities[0].days, tripType: cities[0].tripType, cities: cities, lowest: at(min),
+    highest: at(max) };
+}
+
 // GA4 location_type: 'mixed' when a trip has both standard-rate and city destinations.
 export function locationType(destinations) {
   let std = false;
@@ -562,10 +646,20 @@ export function summaryText(result, place, departIso, returnIso, note) {
     'Total allowance ' + formatMoney(result.total) + '.';
 }
 
-// A trip's places in travel order: "A", "A and B", "A, B and C".
+// "A", "A and B", "A, B and C".
+function joinNames(names) {
+  return names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+}
+
+// A trip's places in travel order.
 function placeList(result) {
-  const places = result.destinations.map(function (d) { return d.place; });
-  return places.length === 1 ? places[0] : places.slice(0, -1).join(', ') + ' and ' + places[places.length - 1];
+  return joinNames(result.destinations.map(function (d) { return d.place; }));
+}
+
+// "12–14 Oct 2026 (3 days)", "5 Oct 2026 (1 day)"
+function datesAndDays(departIso, returnIso, days) {
+  return formatDateRange(parseISODate(departIso), parseISODate(returnIso)) + ' (' + days +
+    (days === 1 ? ' day)' : ' days)');
 }
 
 // Summary for a calculateTrip result: its places in travel order. A same-day trip to several places
@@ -635,6 +729,39 @@ export function breakdownLines(res) {
   return lines;
 }
 
+// Summary for a calculateCompare result (v1.3 spec §5): the number of cities and the dates, then the lowest
+// city or cities and, with 3+ cities, the highest; with 2 cities, how much less than the other one. Cities
+// tied at the lowest or the highest are named together. Every total the same: that amount ("Both cities"
+// for 2, "All cities" for 3 or more). A day trip of 12 hours or less (every city $0): its notice.
+export function compareSummaryText(cmp, departIso, returnIso) {
+  if (cmp.tripType === 'day_short') return MESSAGES.dayShort;
+  const cities = cmp.cities;
+  const head = cities.length + ' cities, ' + datesAndDays(departIso, returnIso, cmp.days) + '. ';
+  if (!cmp.lowest.length) {
+    return head + (cities.length === 2 ? 'Both' : 'All') + ' cities have the same allowance: ' +
+      formatMoney(cities[0].total) + '.';
+  }
+  const total = function (idx) { return cities[idx[0]].total; };
+  const names = function (idx) {
+    return joinNames(idx.map(function (i) { return cities[i].destinations[0].place; }));
+  };
+  const lowest = 'Lowest: ' + names(cmp.lowest) + ' at ' + formatMoney(total(cmp.lowest));
+  if (cities.length === 2) {
+    return head + lowest + ', ' + formatMoney(total(cmp.highest) - total(cmp.lowest)) + ' less than ' +
+      names(cmp.highest) + '.';
+  }
+  return head + lowest + '. Highest: ' + names(cmp.highest) + ' at ' + formatMoney(total(cmp.highest)) + '.';
+}
+
+// Compare result lines (v1.3 spec §5), one per city in entry order: { place, detail, amount, lowest }, where
+// detail is "Lodging $226 · M&IE $170" and lowest marks the city or cities that get the Lowest badge.
+export function compareLines(cmp) {
+  return cmp.cities.map(function (r, i) {
+    return { place: r.destinations[0].place, detail: 'Lodging ' + formatMoney(r.lodging) + ' · M&IE ' +
+      formatMoney(r.mie), amount: r.total, lowest: cmp.lowest.indexOf(i) !== -1 };
+  });
+}
+
 // GA4 params for perdiem_calculate and perdiem_export (v1.1 spec §9): codes and counts only, never
 // dates, place names or anything typed.
 export function analyticsParams(result) {
@@ -654,6 +781,14 @@ export function planAnalyticsParams(plan) {
   const p = analyticsParams({ destinations: dests, days: plan.days, tripType: type });
   p.trips = plan.trips.length;
   return p;
+}
+
+// GA4 params for perdiem_compare (v1.3 spec §8): city 1's state, the number of cities (2 to 5), days,
+// trip_type, and location_type across the cities. Codes and counts only.
+export function compareAnalyticsParams(cmp) {
+  const dests = cmp.cities.map(function (r) { return r.destinations[0]; });
+  return { state: dests[0].state, cities: dests.length, days: cmp.days, trip_type: cmp.tripType,
+    location_type: locationType(dests) };
 }
 
 // Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
@@ -731,9 +866,8 @@ export function buildCsv(result, departIso, returnIso, todayIso) {
   const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + csvPlaces(result) : csvPlace(dests[0])]];
   const rateUsed = csvRateUsed(result);
   if (rateUsed) lines.push([rateUsed]);
-  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
-    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
-  CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
+  lines.push(['Travel dates: ' + datesAndDays(departIso, returnIso, result.days)],
+    CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
   csvDays(result, lines);
   lines.push(csvTotal('Total', result));
   return {
@@ -771,4 +905,25 @@ export function buildPlanCsv(plan, todayIso) {
   });
   lines.push(csvTotal('Total', plan));
   return { filename: 'per-diem-trips-' + span[0] + '-to-' + span[1] + '.csv', text: csvText(lines) };
+}
+
+const CSV_COMPARE_COLUMNS = ['City', 'State', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Total (USD)',
+  'Lowest'];
+
+// CSV export of a calculateCompare result (v1.3 spec §7). Header: the dates and the number of cities. Rows:
+// one per city in entry order with its totals, City and State named as in v1.1 ("Standard rate", "North
+// Dakota"), and Lowest "Yes" for the lowest city or cities. No daily rows, no total row. Same cells,
+// quoting, BOM and CRLF as buildCsv.
+export function buildCompareCsv(cmp, departIso, returnIso, todayIso) {
+  const n = csvNumber;
+  const today = parseISODate(todayIso);
+  const lines = [['ITILITE per diem comparison'], ['Travel dates: ' + datesAndDays(departIso, returnIso, cmp.days)],
+    ['Cities: ' + cmp.cities.length], CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [],
+    CSV_COMPARE_COLUMNS];
+  cmp.cities.forEach(function (r, i) {
+    const d = r.destinations[0];
+    lines.push([d.location === 'std' ? 'Standard rate' : d.place, d.stateName, n(r.lodging), n(r.meals),
+      n(r.incidentals), n(r.total), cmp.lowest.indexOf(i) !== -1 ? 'Yes' : '']);
+  });
+  return { filename: 'per-diem-compare-' + departIso + '-to-' + returnIso + '.csv', text: csvText(lines) };
 }

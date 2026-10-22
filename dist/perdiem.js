@@ -4,8 +4,8 @@
 
 // ---- src/calc-core.js ----
 // Pure per diem calculation functions: no DOM, no fetch. Spec: docs/phase-4-calculator.md, extended
-// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules) and docs/v1.2.0-separate-trips.md
-// (plans of separate trips).
+// by docs/v1.1.0-multi-city.md (multi-city trips, same-day rules), docs/v1.2.0-separate-trips.md
+// (plans of separate trips) and docs/v1.3.0-compare-cities.md (cities side by side).
 // Written as an ES module so node --test can import it; scripts/build-js.js strips the `export`
 // keywords and inlines this file into the dist/perdiem.js IIFE. Keep syntax at ES2019 or older.
 //
@@ -20,6 +20,7 @@ const MAX_DAYS = 365;
 
 const MAX_DESTINATIONS = 5;
 const MAX_TRIPS = 5;
+const MAX_CITIES = 5;
 
 // k is the 1-based destination number (in the trip messages: the trip number, and j the other trip's);
 // place is a placeName().
@@ -58,7 +59,14 @@ const MESSAGES = {
   tripTouch: function (k, j, starts) {
     return 'Trip ' + k + (starts ? ' starts the day trip ' + j + ' ends.' : ' ends the day trip ' + j + ' starts.') +
       ' For one continuous trip, use Add another destination instead.';
-  }
+  },
+  // Compare cities (v1.3 spec §3): the empty-date prompts (the page's v1.1 wording), the prefix for a city's
+  // own messages (n is the city number, m the earlier one), the same city twice, and fewer than 2 cities.
+  chooseDepart: 'Choose your departure date',
+  chooseReturn: 'Choose your return date',
+  inCity: function (n, text) { return 'City ' + n + ': ' + text; },
+  citySame: function (n, m) { return 'City ' + n + ' is the same as city ' + m + '. Choose a different city.'; },
+  addCity: 'Add another city to compare.'
 };
 
 // 'YYYY-MM-DD' → day number, or null if malformed or not a real date.
@@ -524,6 +532,82 @@ function calculatePlan(plan) {
   return out;
 }
 
+// ---- v1.3.0: Compare cities (docs/v1.3.0-compare-cities.md §2, §3) ----
+// comparison: { meta, files, departIso, returnIso, over12, cities: [{ state, location, stateName }] }: up to
+// 5 cities in the order entered, each one destination of a trip on the shared dates and switch.
+
+// A city as a calculateTrip input.
+function cityTrip(cmp, city) {
+  return { departIso: cmp.departIso, returnIso: cmp.returnIso, over12: cmp.over12, meta: cmp.meta,
+    files: cmp.files, destinations: [{ state: city.state, location: city.location, arrive: null,
+      stateName: city.stateName }] };
+}
+
+// A message about city i (0-based; null for the dates or the whole comparison) and its field.
+function cityFail(text, incomplete, i, field) {
+  return { ok: false, error: text, incomplete: incomplete, city: i, field: field };
+}
+
+// The checks that need no data file (§3 steps 1 to 4), in order: the first failure, or null.
+function compareCheck(cmp, meta) {
+  const cities = cmp.cities;
+  if (!cities || cities.length > MAX_CITIES) throw new Error('calculateCompare: up to ' + MAX_CITIES + ' cities');
+  if (!cmp.departIso) return cityFail(MESSAGES.chooseDepart, true, null, 'depart');
+  if (!cmp.returnIso) return cityFail(MESSAGES.chooseReturn, true, null, 'return');
+  const v = validateDates(cmp.departIso, cmp.returnIso, meta);
+  if (!v.ok) return cityFail(v.error, false, null, v.field);
+  for (let i = 0; i < cities.length; i++) {
+    if (!cities[i].state) return cityFail(MESSAGES.inCity(i + 1, MESSAGES.chooseState), true, i, 'state');
+    if (!cities[i].location) return cityFail(MESSAGES.inCity(i + 1, MESSAGES.chooseLocation), true, i, 'location');
+  }
+  // Each city against the cities entered before it; the later one is marked.
+  for (let k = 1; k < cities.length; k++) {
+    for (let j = 0; j < k; j++) {
+      if (cities[k].state === cities[j].state && cities[k].location === cities[j].location) {
+        return cityFail(MESSAGES.citySame(k + 1, j + 1), false, k, 'location');
+      }
+    }
+  }
+  if (cities.length < 2) return cityFail(MESSAGES.addCity, true, null, null);
+  return null;
+}
+
+// The [fy, ST] state files calculateCompare reads: every city's, or none while a check that needs no data
+// file fails (its message wins).
+function compareNeeded(cmp, meta) {
+  if (compareCheck(cmp, meta)) return [];
+  return planNeeded({ trips: cmp.cities.map(function (c) { return cityTrip(cmp, c); }) }, meta);
+}
+
+// Each city is calculated on its own with calculateTrip: its own 75% first and last day, fiscal years,
+// standard-rate fallback and rate-gap check. Checks in §3 order, first failure wins: the dates (v1.1
+// messages), each city's State then City ("City n: " prompts), the same city twice, fewer than 2 cities,
+// then each city's own calculation ("City n: " errors). Nothing is added up.
+// files must hold compareNeeded(comparison, meta).
+// Returns { ok: false, error, incomplete, city, field } or { ok: true, days, tripType, cities[], lowest[],
+// highest[] }: cities are the calculateTrip results in entry order; lowest and highest are the indexes of the
+// cities at the lowest and highest total, compared in cents, both empty when every total is the same.
+function calculateCompare(cmp) {
+  const bad = compareCheck(cmp, cmp.meta);
+  if (bad) return bad;
+  const cities = [];
+  for (let i = 0; i < cmp.cities.length; i++) {
+    const r = calculateTrip(cityTrip(cmp, cmp.cities[i]));
+    if (!r.ok) return cityFail(MESSAGES.inCity(i + 1, r.error), r.incomplete, i, r.field);
+    cities.push(r);
+  }
+  const cents = cities.map(function (r) { return Math.round(r.total * 100); });
+  const min = Math.min.apply(null, cents);
+  const max = Math.max.apply(null, cents);
+  const at = function (value) {
+    const out = [];
+    cents.forEach(function (c, i) { if (min !== max && c === value) out.push(i); });
+    return out;
+  };
+  return { ok: true, days: cities[0].days, tripType: cities[0].tripType, cities: cities, lowest: at(min),
+    highest: at(max) };
+}
+
 // GA4 location_type: 'mixed' when a trip has both standard-rate and city destinations.
 function locationType(destinations) {
   let std = false;
@@ -567,10 +651,20 @@ function summaryText(result, place, departIso, returnIso, note) {
     'Total allowance ' + formatMoney(result.total) + '.';
 }
 
-// A trip's places in travel order: "A", "A and B", "A, B and C".
+// "A", "A and B", "A, B and C".
+function joinNames(names) {
+  return names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+}
+
+// A trip's places in travel order.
 function placeList(result) {
-  const places = result.destinations.map(function (d) { return d.place; });
-  return places.length === 1 ? places[0] : places.slice(0, -1).join(', ') + ' and ' + places[places.length - 1];
+  return joinNames(result.destinations.map(function (d) { return d.place; }));
+}
+
+// "12–14 Oct 2026 (3 days)", "5 Oct 2026 (1 day)"
+function datesAndDays(departIso, returnIso, days) {
+  return formatDateRange(parseISODate(departIso), parseISODate(returnIso)) + ' (' + days +
+    (days === 1 ? ' day)' : ' days)');
 }
 
 // Summary for a calculateTrip result: its places in travel order. A same-day trip to several places
@@ -640,6 +734,39 @@ function breakdownLines(res) {
   return lines;
 }
 
+// Summary for a calculateCompare result (v1.3 spec §5): the number of cities and the dates, then the lowest
+// city or cities and, with 3+ cities, the highest; with 2 cities, how much less than the other one. Cities
+// tied at the lowest or the highest are named together. Every total the same: that amount ("Both cities"
+// for 2, "All cities" for 3 or more). A day trip of 12 hours or less (every city $0): its notice.
+function compareSummaryText(cmp, departIso, returnIso) {
+  if (cmp.tripType === 'day_short') return MESSAGES.dayShort;
+  const cities = cmp.cities;
+  const head = cities.length + ' cities, ' + datesAndDays(departIso, returnIso, cmp.days) + '. ';
+  if (!cmp.lowest.length) {
+    return head + (cities.length === 2 ? 'Both' : 'All') + ' cities have the same allowance: ' +
+      formatMoney(cities[0].total) + '.';
+  }
+  const total = function (idx) { return cities[idx[0]].total; };
+  const names = function (idx) {
+    return joinNames(idx.map(function (i) { return cities[i].destinations[0].place; }));
+  };
+  const lowest = 'Lowest: ' + names(cmp.lowest) + ' at ' + formatMoney(total(cmp.lowest));
+  if (cities.length === 2) {
+    return head + lowest + ', ' + formatMoney(total(cmp.highest) - total(cmp.lowest)) + ' less than ' +
+      names(cmp.highest) + '.';
+  }
+  return head + lowest + '. Highest: ' + names(cmp.highest) + ' at ' + formatMoney(total(cmp.highest)) + '.';
+}
+
+// Compare result lines (v1.3 spec §5), one per city in entry order: { place, detail, amount, lowest }, where
+// detail is "Lodging $226 · M&IE $170" and lowest marks the city or cities that get the Lowest badge.
+function compareLines(cmp) {
+  return cmp.cities.map(function (r, i) {
+    return { place: r.destinations[0].place, detail: 'Lodging ' + formatMoney(r.lodging) + ' · M&IE ' +
+      formatMoney(r.mie), amount: r.total, lowest: cmp.lowest.indexOf(i) !== -1 };
+  });
+}
+
 // GA4 params for perdiem_calculate and perdiem_export (v1.1 spec §9): codes and counts only, never
 // dates, place names or anything typed.
 function analyticsParams(result) {
@@ -659,6 +786,14 @@ function planAnalyticsParams(plan) {
   const p = analyticsParams({ destinations: dests, days: plan.days, tripType: type });
   p.trips = plan.trips.length;
   return p;
+}
+
+// GA4 params for perdiem_compare (v1.3 spec §8): city 1's state, the number of cities (2 to 5), days,
+// trip_type, and location_type across the cities. Codes and counts only.
+function compareAnalyticsParams(cmp) {
+  const dests = cmp.cities.map(function (r) { return r.destinations[0]; });
+  return { state: dests[0].state, cities: dests.length, days: cmp.days, trip_type: cmp.tripType,
+    location_type: locationType(dests) };
 }
 
 // Quoted, quotes doubled; a leading = + - @ (or tab/CR) gets a ' so Excel treats it as text.
@@ -736,9 +871,8 @@ function buildCsv(result, departIso, returnIso, todayIso) {
   const lines = [['ITILITE per diem estimate'], [multi ? 'Trip: ' + csvPlaces(result) : csvPlace(dests[0])]];
   const rateUsed = csvRateUsed(result);
   if (rateUsed) lines.push([rateUsed]);
-  lines.push(['Travel dates: ' + formatDateRange(parseISODate(departIso), parseISODate(returnIso)) +
-    ' (' + result.days + (result.days === 1 ? ' day)' : ' days)')],
-  CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
+  lines.push(['Travel dates: ' + datesAndDays(departIso, returnIso, result.days)],
+    CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [], CSV_COLUMNS);
   csvDays(result, lines);
   lines.push(csvTotal('Total', result));
   return {
@@ -778,20 +912,41 @@ function buildPlanCsv(plan, todayIso) {
   return { filename: 'per-diem-trips-' + span[0] + '-to-' + span[1] + '.csv', text: csvText(lines) };
 }
 
+const CSV_COMPARE_COLUMNS = ['City', 'State', 'Lodging (USD)', 'Meals (USD)', 'Incidentals (USD)', 'Total (USD)',
+  'Lowest'];
+
+// CSV export of a calculateCompare result (v1.3 spec §7). Header: the dates and the number of cities. Rows:
+// one per city in entry order with its totals, City and State named as in v1.1 ("Standard rate", "North
+// Dakota"), and Lowest "Yes" for the lowest city or cities. No daily rows, no total row. Same cells,
+// quoting, BOM and CRLF as buildCsv.
+function buildCompareCsv(cmp, departIso, returnIso, todayIso) {
+  const n = csvNumber;
+  const today = parseISODate(todayIso);
+  const lines = [['ITILITE per diem comparison'], ['Travel dates: ' + datesAndDays(departIso, returnIso, cmp.days)],
+    ['Cities: ' + cmp.cities.length], CSV_SOURCE, ['Generated ' + formatDateRange(today, today)], [],
+    CSV_COMPARE_COLUMNS];
+  cmp.cities.forEach(function (r, i) {
+    const d = r.destinations[0];
+    lines.push([d.location === 'std' ? 'Standard rate' : d.place, d.stateName, n(r.lodging), n(r.meals),
+      n(r.incidentals), n(r.total), cmp.lowest.indexOf(i) !== -1 ? 'Yes' : '']);
+  });
+  return { filename: 'per-diem-compare-' + departIso + '-to-' + returnIso + '.csv', text: csvText(lines) };
+}
+
 // ---- src/perdiem.js ----
 // DOM wiring for the per diem calculator. Spec: docs/phase-4-calculator.md, extended by
-// docs/v1.1.0-multi-city.md (multi-city rows, same-day switch) and docs/v1.2.0-separate-trips.md
-// (separate trips).
+// docs/v1.1.0-multi-city.md (multi-city rows, same-day switch), docs/v1.2.0-separate-trips.md
+// (separate trips) and docs/v1.3.0-compare-cities.md (Compare cities mode).
 // Adds behaviour to the existing Webflow markup (data-pd hooks) — never adds layout or styles, apart
-// from cloning the templates: trip blocks, destination rows and result breakdown lines (v1.1 §7, §17,
-// v1.2 §5).
+// from cloning the templates: trip blocks, destination rows, city rows and result lines (v1.1 §7, §17,
+// v1.2 §5, v1.3 §6).
 // Only runs as part of dist/perdiem.js: scripts/build-js.js drops the import below and inlines
 // calc-core.js into the same IIFE. Keep syntax at ES2019 or older.
 
 
 // Must be read while the script first executes; it is null inside later callbacks.
 const SCRIPT = document.currentScript;
-const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.2.0/';
+const FALLBACK_BASE = 'https://cdn.jsdelivr.net/gh/marketing235/itilite-per-diem@v1.3.0/';
 const HOOKS = ['depart', 'return', 'state', 'location', 'message', 'export', 'days', 'total',
   'lodging', 'meals', 'incidentals'];
 // v1.1 hooks, all optional (spec §7). Without dest-list, dest-template and add the calculator keeps one
@@ -815,6 +970,16 @@ const ROW_HOOKS = { title: 'title', remove: 'remove', arriveField: 'arrive-field
   state: 'state', location: 'location' };
 // data-pd-item hooks inside one result breakdown line.
 const ITEM_HOOKS = ['place', 'dates', 'amount'];
+// v1.3 hooks (spec §6). Compare cities runs only with all of these (and the two mode buttons, a complete
+// city row and a complete result line); without mode, compare-panel or result-compare the calculator runs
+// exactly as v1.2.0. The same-day switch and the "Up to 5 cities." note are optional, as in Calculate.
+const CMP_HOOKS = { mode: 'mode', calcPanel: 'calc-panel', panel: 'compare-panel', resultCalc: 'result-calc',
+  resultCmp: 'result-compare', depart: 'cmp-depart', return: 'cmp-return', list: 'cmp-list', tpl: 'cmp-template',
+  add: 'cmp-add', results: 'cmp-results', lineTpl: 'cmp-result-template' };
+const CMP_OPTIONAL = { over12Wrap: 'cmp-over12-wrap', over12: 'cmp-over12', addNote: 'cmp-add-note' };
+// data-pd-city hooks inside one city row, and data-pd-item hooks inside one compare result line.
+const CITY_HOOKS = { title: 'title', remove: 'remove', status: 'status', state: 'state', location: 'location' };
+const CMP_ITEMS = ITEM_HOOKS.concat('badge');
 const LOAD_ERROR = 'Rates couldn’t load. Please try again.';
 
 // Repo root at the same tag as this script: …/itilite-per-diem@v1.0.0/dist/perdiem.min.js → …@v1.0.0/
@@ -889,6 +1054,25 @@ function tripHooks(block) {
   return hooksIn(block, 'data-pd-trip', TRIP_HOOKS, { block: block });
 }
 
+// A result line template's element if it has every item hook in items, else null.
+function lineOf(tpl, items) {
+  const el = tpl && tpl.content && tpl.content.firstElementChild;
+  return el && items.every((n) => el.querySelector('[data-pd-item="' + n + '"]')) ? el : null;
+}
+
+// The Compare cities parts (v1.3 §6), or null if any required one is missing: K holds the CMP_HOOKS,
+// the optional ones (or null), the two mode buttons, the result line, and later the city rows.
+function compareHooks(root) {
+  const K = hooksIn(root, 'data-pd', CMP_HOOKS, { cities: [], copied: false, err: null });
+  if (!K) return null;
+  Object.keys(CMP_OPTIONAL).forEach((k) => { K[k] = root.querySelector('[data-pd="' + CMP_OPTIONAL[k] + '"]'); });
+  K.calcBtn = K.mode.querySelector('[data-pd-mode="calculate"]');
+  K.cmpBtn = K.mode.querySelector('[data-pd-mode="compare"]');
+  K.line = lineOf(K.lineTpl, CMP_ITEMS);
+  const row = K.tpl.content && K.tpl.content.firstElementChild;
+  return K.calcBtn && K.cmpBtn && K.line && row && hooksIn(row, 'data-pd-city', CITY_HOOKS, {}) ? K : null;
+}
+
 // A destination: its State and City or county selects (destination 1: the trip's own, arrive null;
 // k >= 2: a template row) plus the state of its location menu.
 function newDest(x) {
@@ -929,20 +1113,22 @@ function init(root) {
 
   // Breakdown in the result: its list and line templates with every item hook (destination lines; for a
   // plan, also trip lines).
-  const lineOf = (tpl) => {
-    const el = tpl && tpl.content && tpl.content.firstElementChild;
-    return el && ITEM_HOOKS.every((n) => el.querySelector('[data-pd-item="' + n + '"]')) ? el : null;
-  };
-  const line = e.breakdown && e.breakdownList ? lineOf(e.breakdownTpl) : null;
+  const line = e.breakdown && e.breakdownList ? lineOf(e.breakdownTpl, ITEM_HOOKS) : null;
+  const cparts = ['mode', 'compare-panel', 'result-compare'].filter(q).length;
+  const cmp = cparts === 3 ? compareHooks(root) : null;
+  if (cparts && !cmp) {
+    console.warn('[perdiem] incomplete compare markup (mode, calc-panel, compare-panel, result-calc, ' +
+      'result-compare, cmp-…, data-pd-mode, data-pd-city, data-pd-item); running without Compare cities');
+  }
 
   const pre = (root.getAttribute('data-state') || '').trim().toUpperCase();
   const first = {};
   Object.keys(TRIP_HOOKS).forEach((k) => { first[k] = e[k] || null; });
   const c = {
     e: e, pre: pre, initial: e.message.textContent, seq: 0, active: false, range: null, err: null,
-    multi: multi, line: line, tripLine: line && lineOf(e.tripLineTpl), trips: [newTrip(first)], result: null,
-    timer: 0, fired: {}, totalText: e.totalLabel ? e.totalLabel.textContent : '',
-    byDest: e.breakdownTitle ? e.breakdownTitle.textContent : ''
+    multi: multi, line: line, tripLine: line && lineOf(e.tripLineTpl, ITEM_HOOKS), trips: [newTrip(first)],
+    result: null, timer: 0, fired: {}, totalText: e.totalLabel ? e.totalLabel.textContent : '',
+    byDest: e.breakdownTitle ? e.breakdownTitle.textContent : '', cmp: cmp, mode: 'calculate'
   };
   if (pre && Array.prototype.some.call(e.state.options, (o) => o.value === pre)) e.state.value = pre;
 
@@ -952,6 +1138,7 @@ function init(root) {
     on(e.addTrip, 'click', () => addTrip(c));
     if (e.addTripWrap) e.addTripWrap.hidden = false;
   }
+  if (cmp) wireCompare(c);
 
   // Lazy start: nothing is fetched until the card is near the viewport or a field gets focus.
   const activate = () => {
@@ -1068,6 +1255,117 @@ function removeTrip(c, T) {
   layout(c);
   c.e.addTrip.focus();
   update(c);
+}
+
+// Compare cities (v1.3 §4): the mode buttons, the shared dates and switch, Add another city, and the two
+// starting rows, city 1 with the state page's state as in Calculate. Then the switch shows.
+function wireCompare(c) {
+  const K = c.cmp;
+  const onChange = () => update(c);
+  [K.depart, K.return].forEach((el) => {
+    on(el, 'input', onChange);
+    on(el, 'change', onChange);
+    openPickerOnClick(el);
+  });
+  if (K.over12) on(K.over12, 'change', onChange);
+  on(K.add, 'click', () => addCity(c));
+  on(K.calcBtn, 'click', () => setMode(c, 'calculate'));
+  on(K.cmpBtn, 'click', () => setMode(c, 'compare'));
+  newCity(c, c.pre && c.e.state.value === c.pre ? c.pre : '');
+  newCity(c, '');
+  layoutCompare(c);
+  K.mode.hidden = false;
+}
+
+// The mode switch (v1.3 §4): one panel and its results show, each mode keeping its own inputs. The first
+// switch to Compare copies trip 1's dates, switch and destination 1 into the compare dates and city 1,
+// where they are filled; city 2 stays empty. Focus stays on the button.
+function setMode(c, mode) {
+  const K = c.cmp;
+  const cmp = mode === 'compare';
+  if (c.mode === mode) return;
+  if (cmp && !K.copied) {
+    const T = c.trips[0];
+    const x = T.dests[0];
+    const city = K.cities[0];
+    K.copied = true;
+    if (T.depart.value) K.depart.value = T.depart.value;
+    if (T.return.value) K.return.value = T.return.value;
+    if (T.over12 && K.over12) K.over12.checked = T.over12.checked;
+    if (x.state.value) {
+      city.state.value = x.state.value;
+      newDest(city);
+      // The menu, once built, keeps destination 1's city (same state, same departure date).
+      city.menuState = x.state.value;
+      city.selected = x.location.value;
+    }
+  }
+  c.mode = mode;
+  K.calcBtn.setAttribute('aria-pressed', !cmp);
+  K.cmpBtn.setAttribute('aria-pressed', cmp);
+  K.calcPanel.hidden = K.resultCalc.hidden = cmp;
+  K.panel.hidden = K.resultCmp.hidden = !cmp;
+  showMessage(c, c.initial, false);
+  update(c);
+}
+
+// A city row from the template, its State set to st (empty: "Choose a state"), added at the end.
+function newCity(c, st) {
+  const K = c.cmp;
+  const row = clone(K.tpl);
+  const x = newDest(hooksIn(row, 'data-pd-city', CITY_HOOKS, { row: row }));
+  copyStates(c, x.state);
+  x.state.value = st;
+  wireDest(c, null, x);
+  on(x.remove, 'click', () => removeCity(c, x));
+  K.list.appendChild(row);
+  K.cities.push(x);
+  return x;
+}
+
+// Add another city (v1.3 §4): its State prefilled from the previous city. Focus goes to that State.
+function addCity(c) {
+  const K = c.cmp;
+  if (K.cities.length >= MAX_CITIES) return;
+  const x = newCity(c, K.cities[K.cities.length - 1].state.value);
+  layoutCompare(c);
+  x.state.focus();
+  update(c);
+}
+
+// Remove a city (never below 2); a menu still loading for it is dropped. Focus goes to Add another city.
+function removeCity(c, x) {
+  const K = c.cmp;
+  const i = K.cities.indexOf(x);
+  if (i < 0 || K.cities.length < 3) return;
+  K.cities.splice(i, 1);
+  x.wantMenu = null;
+  x.row.parentNode.removeChild(x.row);
+  layoutCompare(c);
+  K.add.focus();
+  update(c);
+}
+
+// Compare numbering after any add or remove, from each row's position so ids stay unique: legend
+// "City n", its Remove label and pd-city-{n}-… ids. Remove shows from 3 rows; Add another city disables
+// and its note shows at 5.
+function layoutCompare(c) {
+  const K = c.cmp;
+  const n = K.cities.length;
+  K.cities.forEach((x, i) => {
+    const id = 'pd-city-' + (i + 1) + '-';
+    setText(x.title, 'City ' + (i + 1));
+    x.remove.setAttribute('aria-label', 'Remove city ' + (i + 1));
+    x.remove.hidden = n < 3;
+    labelled(x.state, id + 'state');
+    labelled(x.location, id + 'location');
+    // Screen readers hear the row's error with its fields.
+    x.status.id = id + 'status';
+    x.state.setAttribute('aria-describedby', x.status.id);
+    x.location.setAttribute('aria-describedby', x.status.id);
+  });
+  K.add.disabled = n >= MAX_CITIES;
+  if (K.addNote) K.addNote.hidden = n < MAX_CITIES;
 }
 
 // Gives a control its id and points the label in its field (else in its parent) at it.
@@ -1188,6 +1486,43 @@ function sync(c) {
     });
   });
   renderStatus(c);
+  if (c.cmp) syncCompare(c);
+}
+
+// The same for the Compare fields (v1.3 §4): the return date's min, the same-day switch, and each city's
+// error line.
+function syncCompare(c) {
+  const K = c.cmp;
+  const d = parseISODate(K.depart.value);
+  const r = parseISODate(K.return.value);
+  if (c.range) K.return.min = d !== null && (r === null || r < d) ? K.depart.value : toISODate(c.range.min);
+  if (K.over12Wrap) K.over12Wrap.hidden = !sameDay(K);
+  renderCompareStatus(c);
+}
+
+// Exactly one field, the one an error is about (target), gets aria-invalid; null entries are skipped.
+function markInvalid(fields, target) {
+  fields.forEach((f) => {
+    if (!f) return;
+    if (f === target) f.setAttribute('aria-invalid', 'true');
+    else f.removeAttribute('aria-invalid');
+  });
+}
+
+// A compare error (not a prompt) shows on its city's line in red (is-error) and marks its field; an error
+// about the dates marks that date. The bottom message repeats it (v1.3 §4, the v1.1 pattern).
+function renderCompareStatus(c) {
+  const K = c.cmp;
+  const err = K.err;
+  const fields = [K.depart, K.return];
+  K.cities.forEach((x, i) => {
+    const own = !!err && err.city === i;
+    setText(x.status, own ? err.error : '');
+    x.status.hidden = !own;
+    x.status.classList.toggle('is-error', own);
+    fields.push(x.state, x.location);
+  });
+  markInvalid(fields, err && err.field ? (err.city === null ? K : K.cities[err.city])[err.field] : null);
 }
 
 // The lines under the titles. Each destination's (2+ destinations in its trip): the error about it,
@@ -1228,11 +1563,7 @@ function renderStatus(c) {
     fields.push(T.depart, T.return);
     T.dests.forEach((x) => fields.push(x.arrive, x.state, x.location));
   });
-  fields.forEach((f) => {
-    if (!f) return;
-    if (f === target) f.setAttribute('aria-invalid', 'true');
-    else f.removeAttribute('aria-invalid');
-  });
+  markInvalid(fields, target);
 }
 
 // Errors (not "Choose …" prompts) are marked on their trip, destination and field.
@@ -1286,12 +1617,15 @@ function clearMenu(x) {
 function update(c) {
   const seq = ++c.seq;
   const current = () => seq === c.seq;
+  // Compare mode (v1.3) runs the same steps on its own dates and city rows.
+  const K = c.mode === 'compare' ? c.cmp : null;
   // Errors are re-checked on every change (compute marks them again if they remain).
   c.err = null;
+  if (K) K.err = null;
   sync(c);
   // A state is chosen (preselected on state pages, prefilled on new rows) but its menu isn't built yet.
   const pending = (x) => x.state.value && (!x.menuKey || x.menuKey.indexOf(x.state.value + '/') !== 0);
-  const dests = allDests(c);
+  const dests = K ? K.cities : allDests(c);
   if (!loaded(META_URL)) {
     dests.forEach((x) => { if (pending(x)) setOptions(x, [{ value: '', label: 'Loading…' }], '', true); });
   }
@@ -1300,8 +1634,14 @@ function update(c) {
       if (!current()) return;
       if (!c.range) {
         c.range = availableRange(meta);
-        c.trips.forEach((T) => dateBounds(c, T));
+        c.trips.concat(c.cmp || []).forEach((T) => dateBounds(c, T));
         sync(c);
+      }
+      // Compare: every city's menu uses the fiscal year of the shared departure date.
+      if (K) {
+        return Promise.all(K.cities.map((x) => (x.state.value ? ensureMenu(c, x, x.state.value,
+          menuFiscalYear(meta, K.depart.value, todayIso())) : clearMenu(x))))
+          .then(() => { if (current()) return computeCompare(c, meta, current); });
       }
       // Each menu uses the fiscal year of its destination's start: its trip's departure date for
       // destination 1 and on same-day trips, else its Arrive on date, else the departure date.
@@ -1322,7 +1662,7 @@ function update(c) {
       dests.forEach((x) => {
         if (pending(x) && !x.wantMenu) setOptions(x, [{ value: '', label: 'Rates couldn’t load' }], '', true);
       });
-      const tableBelow = c.pre && c.pre === c.e.state.value;
+      const tableBelow = c.pre && c.pre === (K ? K.cities[0] : c.e).state.value;
       showMessage(c, LOAD_ERROR + (tableBelow ? ' The full rate table is below.' : ''), true);
     });
 }
@@ -1385,21 +1725,54 @@ function compute(c, meta, current) {
   });
 }
 
+// Compare mode (v1.3 §3, §5): every city on the shared dates and switch, side by side, nothing added up.
+// Both dates empty keep the opening message, as in Calculate; the rest of the checks are calculateCompare's.
+function computeCompare(c, meta, current) {
+  const K = c.cmp;
+  const d = K.depart.value;
+  const r = K.return.value;
+  const cmp = { meta: meta, departIso: d, returnIso: r, over12: K.over12 ? K.over12.checked : undefined,
+    cities: K.cities.map((x) => ({ state: x.state.value, location: x.location.value, stateName: stateName(x) })) };
+  if (!d && !r) return showMessage(c, c.initial, false);
+  const needed = compareNeeded(cmp, meta);
+  const urls = needed.map((p) => stateUrl(p[0], p[1]));
+  if (!urls.every(loaded)) showMessage(c, c.initial, false);
+  return Promise.all(urls.map(load)).then((list) => {
+    if (!current()) return;
+    cmp.files = filesFor(needed, list);
+    const res = calculateCompare(cmp);
+    if (!res.ok) {
+      K.err = res.incomplete ? null : res;
+      renderCompareStatus(c);
+      return showMessage(c, res.error, !res.incomplete);
+    }
+    showResult(c, { res: res, lines: compareLines(res), summary: compareSummaryText(res, d, r),
+      empty: !res.cities.some((t) => t.total > 0), event: 'perdiem_compare', params: compareAnalyticsParams(res),
+      key: ['compare', d, r, cmp.over12].concat(cmp.cities.map((x) => x.state + '/' + x.location)).join('|'),
+      csv: (today) => buildCompareCsv(res, d, r, today) });
+  });
+}
+
 // A valid result x { res, summary, empty, key, params, csv(todayIso) }: the five boxes (plan totals for
-// 2+ trips), the summary line, the breakdown and Export, then the calculate event. Nothing to export
-// (empty) is a valid $0 result: a day trip of 12 hours or less, or a plan of only such trips.
+// 2+ trips) and the breakdown, or in Compare mode (x.lines, x.event) the city list; then the summary line
+// and Export, then the calculate (or compare) event. Nothing to export (empty) is a valid $0 result: a day
+// trip of 12 hours or less, a plan of only such trips, or a comparison of one.
 function showResult(c, x) {
   const e = c.e;
   const res = x.res;
-  setText(e.days, String(res.days));
-  setText(e.total, formatMoney(res.total));
-  setText(e.lodging, formatMoney(res.lodging));
-  setText(e.meals, formatMoney(res.meals));
-  setText(e.incidentals, formatMoney(res.incidentals));
+  if (x.lines) {
+    renderCompare(c, x.lines);
+  } else {
+    setText(e.days, String(res.days));
+    setText(e.total, formatMoney(res.total));
+    setText(e.lodging, formatMoney(res.lodging));
+    setText(e.meals, formatMoney(res.meals));
+    setText(e.incidentals, formatMoney(res.incidentals));
+    renderBreakdown(c, res);
+  }
   setText(e.message, x.summary);
   e.message.classList.remove('is-error');
   e.export.disabled = x.empty;
-  renderBreakdown(c, res);
   c.result = x;
   scheduleCalculateEvent(c);
 }
@@ -1410,8 +1783,29 @@ function clearResults(c) {
   ['total', 'lodging', 'meals', 'incidentals'].forEach((k) => setText(e[k], '$0'));
   e.export.disabled = true;
   renderBreakdown(c, null);
+  renderCompare(c, []);
   c.result = null;
   clearTimeout(c.timer);
+}
+
+// Compare result list (v1.3 §5), cloned from its template: one line per city in entry order with its
+// lodging and M&IE line and its total; the lowest city or cities get is-lowest and the Lowest badge (text,
+// never colour alone).
+function renderCompare(c, lines) {
+  const K = c.cmp;
+  if (!K) return;
+  const list = K.results;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  lines.forEach((l) => {
+    const li = document.importNode(K.line, true);
+    const item = (n) => li.querySelector('[data-pd-item="' + n + '"]');
+    item('place').textContent = l.place;
+    item('dates').textContent = l.detail;
+    item('amount').textContent = formatMoney(l.amount);
+    item('badge').hidden = !l.lowest;
+    li.classList.toggle('is-lowest', l.lowest);
+    list.appendChild(li);
+  });
 }
 
 // Result breakdown, cloned from the templates (v1.1 §17, v1.2 §4). One trip: a line per destination of an
@@ -1444,7 +1838,8 @@ function showMessage(c, text, isError) {
   c.e.message.classList.toggle('is-error', isError);
 }
 
-// perdiem_calculate: once per distinct valid result, after the inputs settle for 1.5 s.
+// perdiem_calculate (perdiem_compare in Compare mode, v1.3 §8): once per distinct valid result, after the
+// inputs settle for 1.5 s.
 function scheduleCalculateEvent(c) {
   clearTimeout(c.timer);
   const key = c.result.key;
@@ -1452,7 +1847,7 @@ function scheduleCalculateEvent(c) {
   c.timer = setTimeout(() => {
     if (!c.result || c.result.key !== key) return;
     c.fired[key] = true;
-    track('perdiem_calculate', c.result.params);
+    track(c.result.event || 'perdiem_calculate', c.result.params);
   }, 1500);
 }
 
@@ -1468,7 +1863,8 @@ function exportCsv(c) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  track('perdiem_export', x.params);
+  // With Compare cities on, the export says which mode it came from (v1.3 §8); v1.2 markup: as v1.2.0.
+  track('perdiem_export', c.cmp ? Object.assign({}, x.params, { mode: c.mode }) : x.params);
 }
 
 function start() {
@@ -1476,7 +1872,7 @@ function start() {
 }
 
 window.ItilitePerDiem = { base: BASE, cache: cache, calculate: calculate, calculateTrip: calculateTrip,
-  calculatePlan: calculatePlan, validateDates: validateDates };
+  calculatePlan: calculatePlan, calculateCompare: calculateCompare, validateDates: validateDates };
 if (document.readyState === 'loading') on(document, 'DOMContentLoaded', start);
 else start();
 })();
