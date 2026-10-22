@@ -50,9 +50,11 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target for the calculator (`perdiem.min.js`) from v1.3.0 is ≤ 34 KB minified and
-  ≤ 12 KB gzipped, served file (raised 22 Oct 2026; v1.2.0 serves 28,955 bytes including jsDelivr's
-  header; see `docs/v1.3.0-compare-cities.md` §12).
+  Core Web Vitals; target for the calculator (`perdiem.min.js`) from v1.3.0 is ≤ 38 KB minified and
+  ≤ 13 KB gzipped, served file (raised 22 Oct 2026 after measuring v1.3; v1.2.0 serves 28,955 bytes
+  including jsDelivr's ~350-byte header). Hard ceiling 40 KB: beyond it, load Compare (and later
+  features) as a separate file on first use instead of raising the target again. See
+  `docs/v1.3.0-compare-cities.md` §12.
   Measure for real with `npx terser dist/perdiem.js -c -m` plus gzip, and on the served jsDelivr file
   after tagging. `npm run build:js` prints estimates that read about 30% high and always warn; that
   warning is expected.
