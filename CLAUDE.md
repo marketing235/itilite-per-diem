@@ -50,8 +50,9 @@ also need the rates as server-rendered HTML for SEO, which only a pre-pull can p
 - **Never commit secrets.** The GSA key lives only in `.env` (`GSA_API_KEY=...`) locally and in a
   GitHub Actions secret. `.env` and `fixtures/raw-*.json` are gitignored. Create `.gitignore` first.
 - **Front-end JS is vanilla, IIFE-wrapped, no jQuery, no frameworks.** Script weight matters for
-  Core Web Vitals; target for the calculator (`perdiem.min.js`) from v1.2.0 is ≤ 28 KB minified and
-  ≤ 10 KB gzipped (raised 19 Oct 2026 from 22 KB / 8 KB; see `docs/v1.2.0-separate-trips.md` §11).
+  Core Web Vitals; target for the calculator (`perdiem.min.js`) from v1.3.0 is ≤ 34 KB minified and
+  ≤ 12 KB gzipped, served file (raised 22 Oct 2026; v1.2.0 serves 28,955 bytes including jsDelivr's
+  header; see `docs/v1.3.0-compare-cities.md` §12).
   Measure for real with `npx terser dist/perdiem.js -c -m` plus gzip, and on the served jsDelivr file
   after tagging. `npm run build:js` prints estimates that read about 30% high and always warn; that
   warning is expected.
@@ -77,6 +78,7 @@ cms/tables/{fy}/{ST}.html     county-table HTML snippet per state (Webflow field
 docs/phase-4-calculator.md    Phase 4 — calculator spec (locked)
 docs/v1.1.0-multi-city.md     v1.1.0 — multi-city spec, §1–17 (locked)
 docs/v1.2.0-separate-trips.md v1.2.0 — separate trips spec (locked)
+docs/v1.3.0-compare-cities.md v1.3.0 — Compare cities spec (locked)
 src/calc-core.js              Phase 4 — pure calculation functions, no DOM
 src/perdiem.js                Phase 4 — DOM wiring: hooks, data loading, render, export, analytics
 scripts/build-js.js           Phase 4 — zero-dependency build: wraps calc-core + perdiem into one IIFE
@@ -262,11 +264,14 @@ export, analytics, golden tests). It wins over anything here. In short:
 v1.1.0 (multi-city trips, same-day rules) is specified in docs/v1.1.0-multi-city.md, which extends docs/phase-4-calculator.md.
 v1.2.0 (separate trips: up to 5 trips, each a full v1.1 trip with its own 75% first and last day;
 overlapping or touching trips are an error) is specified in docs/v1.2.0-separate-trips.md, which
-extends docs/v1.1.0-multi-city.md. Where documents disagree, the newer spec wins:
-v1.2.0 → v1.1.0 → phase-4 → this file.
+extends docs/v1.1.0-multi-city.md. v1.3.0 (Compare cities: one set of dates, 2 to 5 cities side
+by side, lowest highlighted, nothing added up) is specified in docs/v1.3.0-compare-cities.md.
+Where documents disagree, the newer spec wins: v1.3.0 → v1.2.0 → v1.1.0 → phase-4 → this file.
 
-**Releases (19 Oct 2026):** live on production `v1.0.1`. `v1.1.0` is the tested fallback and is
-never deployed to production on its own; production goes from `v1.0.1` straight to `v1.2.0`.
+**Releases (22 Oct 2026):** live on production `v1.2.0` (main page and the 49 state pages; the state
+template reuses the Section Perdiem Calc component plus a small setup script that sets `data-state`).
+`v1.1.0` was a tested fallback, never deployed on its own. Next: `v1.3.0` Compare cities; meal
+deductions move to `v1.4.0`.
 `FALLBACK_BASE` in `src/perdiem.js` must equal the tag being released. jsDelivr caches tags
 permanently, so never re-tag a version: fix forward with the next patch tag.
 
