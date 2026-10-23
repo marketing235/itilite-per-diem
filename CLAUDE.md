@@ -270,10 +270,12 @@ extends docs/v1.1.0-multi-city.md. v1.3.0 (Compare cities: one set of dates, 2 t
 by side, lowest highlighted, nothing added up) is specified in docs/v1.3.0-compare-cities.md.
 Where documents disagree, the newer spec wins: v1.3.0 → v1.2.0 → v1.1.0 → phase-4 → this file.
 
-**Releases (22 Oct 2026):** live on production `v1.2.0` (main page and the 49 state pages; the state
-template reuses the Section Perdiem Calc component plus a small setup script that sets `data-state`).
-`v1.1.0` was a tested fallback, never deployed on its own. Next: `v1.3.0` Compare cities; meal
-deductions move to `v1.4.0`.
+**Releases (23 Oct 2026):** live on production `v1.3.0` (main page and the 49 state pages; served
+37,321 bytes). Rollback tag: `v1.2.0`. The state template reuses the Section Perdiem Calc component
+plus a small setup script that sets `data-state` and the heading. The calculator markup also carries a
+desktop-only sticky result (`perdiem-calc_result-body` > `perdiem-calc_result-sticky`, CSS inside the
+embed); the script does not use either class. `v1.1.0` was a tested fallback, never deployed on its
+own. Next: `v1.4.0` meal deductions, after the GA4 review around 20 Nov.
 `FALLBACK_BASE` in `src/perdiem.js` must equal the tag being released. jsDelivr caches tags
 permanently, so never re-tag a version: fix forward with the next patch tag.
 
